@@ -1,0 +1,87 @@
+@import "tailwindcss";
+
+@theme {
+  /* ==========================================================================
+     GLOBAL THEME DESIGN TOKENS (SỬA MÀU SẮC TOÀN BỘ WEB TẠI ĐÂY)
+     ========================================================================== */
+  --color-theme-bg: #f8fafc;                 /* Nền Slate nhạt sang trọng */
+  --color-theme-surface: #ffffff;            /* Nền Card trắng tinh tế */
+  --color-theme-surface-low: #f1f5f9;        /* Nền khối phụ Slate-100 */
+  
+  --color-theme-heading: #0f172a;            /* Chữ tiêu đề Slate-900 đậm chất công nghệ */
+  --color-theme-body: #334155;               /* Chữ nội dung Slate-700 */
+  --color-theme-muted: #64748b;              /* Chữ phụ Slate-500 */
+  
+  --color-brand-primary: #2563eb;            /* Xanh Electric Royal Blue sang trọng */
+  --color-brand-secondary: #1d4ed8;          /* Xanh Deep Indigo */
+  --color-brand-accent: #06b6d4;             /* Xanh Cyan rực rỡ điểm nhấn */
+  --color-brand-accent-hover: #0891b2;       /* Hover Cyan */
+  
+  --color-theme-border: #e2e8f0;             /* Viền Slate-200 rõ ràng sắc nét */
+
+  /* ==========================================================================
+     MAPPING TO EXISTING UI SYSTEM (Không cần thay đổi phía dưới này)
+     ========================================================================== */
+  --color-background: var(--color-theme-bg);
+  --color-surface: var(--color-theme-surface);
+  --color-surface-container-lowest: var(--color-theme-surface);
+  --color-surface-container-low: var(--color-theme-surface-low);
+  --color-surface-container-high: #e8e8eb;
+  --color-surface-container-highest: #e2e2e6;
+  
+  --color-primary: var(--color-brand-primary);
+  --color-primary-container: var(--color-brand-secondary);
+  --color-on-primary-container: #80a8d3;
+  --color-on-primary: #ffffff;
+  
+  --color-secondary: #5c5f61;
+  --color-secondary-container: #e1e2e5;
+  --color-on-secondary: #ffffff;
+  
+  --color-tertiary: #312200;
+  --color-tertiary-container: #4c3700;
+  --color-on-tertiary: #ffffff;
+  --color-tertiary-fixed-dim: var(--color-brand-accent);
+  
+  --color-on-surface: var(--color-theme-heading);
+  --color-on-surface-variant: var(--color-theme-body);
+  --color-outline: var(--color-theme-muted);
+  --color-outline-variant: var(--color-theme-border);
+  
+  --color-error: #ba1a1a;
+  --color-error-container: #ffdad6;
+  --color-on-error: #ffffff;
+  --color-on-error-container: #93000a;
+  
+  --color-inverse-surface: #2f3033;
+  --color-inverse-on-surface: #f0f0f4;
+  --color-inverse-primary: #a2caf7;
+
+  /* Border radius adjustments */
+  --radius-DEFAULT: 0.125rem;
+  --radius-lg: 0.25rem;
+  --radius-xl: 0.5rem;
+  --radius-full: 0.75rem;
+
+  /* Font mapping to Next.js font variables */
+  --font-headline: var(--font-headline);
+  --font-body: var(--font-body);
+  --font-label: var(--font-body);
+}
+
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+.sidebar-slide-in-reveal {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.scale-98:active {
+  transform: scale(0.98);
+}
+
+.glass-effect {
+  backdrop-filter: blur(20px);
+  background-color: rgba(249, 249, 253, 0.8);
+}
