@@ -99,7 +99,7 @@ export default function AdminDashboard() {
                   dx={-10}
                 />
                 <Tooltip 
-                  formatter={(value: number) => [`${value.toLocaleString()} đ`, "Doanh thu"]}
+                  formatter={(value: any) => [`${Number(value).toLocaleString()} đ`, "Doanh thu"]}
                   contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                 />
                 <Line type="monotone" dataKey="revenue" stroke="#0ea5e9" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6, strokeWidth: 0 }} />
