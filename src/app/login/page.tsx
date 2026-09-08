@@ -1,152 +1,99 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
+import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import Header from "@/components/layout/Header";
+import Footer from "@/components/layout/Footer";
+import { useNotification } from "@/context/NotificationContext";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [isLoginTab, setIsLoginTab] = useState(true);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
+  const { showNotification } = useNotification();
+  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+  });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isLoginTab) {
-      alert(`Đăng nhập thành công với tài khoản: ${email}`);
-    } else {
-      alert(`Đăng ký tài khoản thành công cho: ${name}`);
+    setLoading(true);
+
+    try {
+      const res = await signIn("credentials", {
+        redirect: false,
+        email: formData.email,
+        password: formData.password,
+      });
+
+      if (res?.error) {
+        showNotification(res.error, "error");
+      } else {
+        showNotification("Đăng nhập thành công!", "success");
+        router.push("/profile");
+        router.refresh();
+      }
+    } catch (error) {
+      showNotification("Đã có lỗi xảy ra", "error");
+    } finally {
+      setLoading(false);
     }
-    router.push("/");
   };
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-theme-bg">
-      <div className="max-w-md w-full space-y-6 bg-surface p-8 rounded-3xl border border-outline-variant shadow-xl">
-        {/* Header Tabs */}
-        <div className="flex border-b border-outline-variant">
-          <button
-            onClick={() => setIsLoginTab(true)}
-            className={`flex-1 pb-4 text-center text-sm font-semibold transition-all ${
-              isLoginTab
-                ? "text-primary border-b-2 border-primary font-headline"
-                : "text-outline hover:text-on-surface"
-            }`}
-          >
-            Đăng Nhập
-          </button>
-          <button
-            onClick={() => setIsLoginTab(false)}
-            className={`flex-1 pb-4 text-center text-sm font-semibold transition-all ${
-              !isLoginTab
-                ? "text-primary border-b-2 border-primary font-headline"
-                : "text-outline hover:text-on-surface"
-            }`}
-          >
-            Tạo Tài Khoản
-          </button>
-        </div>
-
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-on-surface font-headline">
-            {isLoginTab ? "Chào mừng trở lại!" : "Đăng ký thành viên"}
-          </h2>
-          <p className="text-xs text-on-surface-variant mt-1">
-            {isLoginTab
-              ? "Đăng nhập để theo dõi đơn hàng và lưu danh sách yêu thích"
-              : "Tạo tài khoản để nhận ưu đãi và bảo hành chính hãng"}
-          </p>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {!isLoginTab && (
-            <>
-              <div>
-                <label className="block text-xs font-semibold text-on-surface mb-1">Họ và tên *</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Nguyễn Văn A"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-surface-container-low border border-outline-variant rounded-xl text-sm focus:outline-none focus:border-primary"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-on-surface mb-1">Số điện thoại *</label>
-                <input
-                  type="tel"
-                  required
-                  placeholder="0909 123 456"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-surface-container-low border border-outline-variant rounded-xl text-sm focus:outline-none focus:border-primary"
-                />
-              </div>
-            </>
-          )}
-
-          <div>
-            <label className="block text-xs font-semibold text-on-surface mb-1">Địa chỉ Email *</label>
-            <input
-              type="email"
-              required
-              placeholder="name@company.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-2.5 bg-surface-container-low border border-outline-variant rounded-xl text-sm focus:outline-none focus:border-primary"
-            />
+    <div className="min-h-screen flex flex-col bg-surface">
+      <Header />
+      <main className="flex-1 flex items-center justify-center p-4">
+        <div className="w-full max-w-md bg-surface-container-low rounded-3xl p-8 border border-outline-variant shadow-xl">
+          <div className="text-center mb-8">
+            <h1 className="text-2xl font-bold text-on-surface font-headline">Đăng nhập</h1>
+            <p className="text-sm text-on-surface-variant mt-2">Đăng nhập để theo dõi đơn hàng của bạn</p>
           </div>
 
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="block text-xs font-semibold text-on-surface">Mật khẩu *</label>
-              {isLoginTab && (
-                <a href="#" className="text-xs text-primary hover:underline">
-                  Quên mật khẩu?
-                </a>
-              )}
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-semibold text-on-surface mb-1">Email</label>
+              <input
+                type="email"
+                required
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                className="w-full px-4 py-3 bg-surface border border-outline-variant rounded-xl focus:outline-none focus:border-primary text-sm"
+                placeholder="Ví dụ: example@gmail.com"
+              />
             </div>
-            <input
-              type="password"
-              required
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-2.5 bg-surface-container-low border border-outline-variant rounded-xl text-sm focus:outline-none focus:border-primary"
-            />
+            <div>
+              <label className="block text-sm font-semibold text-on-surface mb-1">Mật khẩu</label>
+              <input
+                type="password"
+                required
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                className="w-full px-4 py-3 bg-surface border border-outline-variant rounded-xl focus:outline-none focus:border-primary text-sm"
+                placeholder="Nhập mật khẩu của bạn"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3 mt-4 bg-primary text-on-primary rounded-xl font-bold hover:bg-primary/90 transition-all disabled:opacity-50"
+            >
+              {loading ? "Đang xử lý..." : "Đăng nhập"}
+            </button>
+          </form>
+
+          <div className="mt-6 text-center text-sm text-on-surface-variant">
+            Chưa có tài khoản?{" "}
+            <Link href="/register" className="text-primary font-semibold hover:underline">
+              Đăng ký ngay
+            </Link>
           </div>
-
-          <button
-            type="submit"
-            className="w-full py-3 bg-primary text-on-primary rounded-xl text-sm font-semibold hover:bg-primary/90 transition-all shadow-md shadow-primary/20 active:scale-98"
-          >
-            {isLoginTab ? "Đăng Nhập" : "Đăng Ký Tài Khoản"}
-          </button>
-        </form>
-
-        <div className="relative flex py-2 items-center">
-          <div className="flex-grow border-t border-outline-variant"></div>
-          <span className="flex-shrink mx-4 text-xs text-outline">Hoặc</span>
-          <div className="flex-grow border-t border-outline-variant"></div>
         </div>
-
-        {/* Guest Order Shortcut Notice */}
-        <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4 text-center">
-          <p className="text-xs text-amber-900 font-medium">Bạn muốn mua hàng ngay?</p>
-          <p className="text-[11px] text-amber-800/80 mt-0.5">
-            Không cần tài khoản! Bạn vẫn có thể mua hàng trực tiếp tại giỏ hàng bằng cách điền thông tin giao hàng.
-          </p>
-          <Link
-            href="/cart"
-            className="inline-block mt-2 text-xs font-bold text-amber-900 underline hover:text-primary transition-colors"
-          >
-            Đến Giỏ hàng & Thanh toán vãng lai ➔
-          </Link>
-        </div>
-      </div>
+      </main>
+      <Footer />
     </div>
   );
 }

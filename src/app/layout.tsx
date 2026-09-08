@@ -4,7 +4,9 @@ import "./globals.css";
 import { CartProvider } from "@/context/CartContext";
 import { NotificationProvider } from "@/context/NotificationContext";
 import { WishlistProvider } from "@/context/WishlistContext";
-import LiveChat from "@/components/ui/LiveChat";
+import ZaloFloat from "@/components/ui/ZaloFloat";
+import SitePopup from "@/components/ui/SitePopup";
+import AuthProvider from "@/components/providers/AuthProvider";
 
 const spaceGrotesk = Space_Grotesk({
   variable: "--font-headline",
@@ -19,8 +21,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "VOLT ARCHITECT - Sản Phẩm Thiết Bị Điện Chuyên Nghiệp",
-  description: "Precision Power Engineering. Đơn vị cung cấp giải pháp điện công nghiệp hàng đầu khu vực.",
+  title: "Thiên Nhật Minh - Sản Phẩm Thiết Bị Điện Chuyên Nghiệp",
+  description: "Đơn vị cung cấp giải pháp điện công nghiệp hàng đầu khu vực.",
 };
 
 export default function RootLayout({
@@ -35,16 +37,20 @@ export default function RootLayout({
     >
       <head>
         <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet" />
+        <link rel="icon" href="/images/logo.png" />
       </head>
       <body className="min-h-full flex flex-col bg-surface font-body text-on-surface">
-        <NotificationProvider>
-          <WishlistProvider>
-            <CartProvider>
-              {children}
-              <LiveChat />
-            </CartProvider>
-          </WishlistProvider>
-        </NotificationProvider>
+        <AuthProvider>
+          <NotificationProvider>
+            <WishlistProvider>
+              <CartProvider>
+                {children}
+                <ZaloFloat />
+                <SitePopup />
+              </CartProvider>
+            </WishlistProvider>
+          </NotificationProvider>
+        </AuthProvider>
       </body>
     </html>
   );

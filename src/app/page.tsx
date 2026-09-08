@@ -1,132 +1,166 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import ProductCard from "@/components/ui/ProductCard";
-import { products } from "@/data/products";
+import NewsList from "@/components/news/NewsList";
+import QuoteRequestSection from "@/components/home/QuoteRequestSection";
+import HomeNewsSection from "@/components/home/HomeNewsSection";
+import CustomersSection from "@/components/home/CustomersSection";
+import BrandsTabSection from "@/components/home/BrandsTabSection";
+import BackToTopButton from "@/components/ui/BackToTopButton";
+import Pagination from "@/components/ui/Pagination";
 import { useNotification } from "@/context/NotificationContext";
 
-interface SubCategory {
+interface CategoryChild {
   id: string;
   name: string;
+  slug: string;
+  _count: { products: number };
 }
 
-interface MainCategory {
+interface CategoryWithChildren {
   id: string;
   name: string;
-  icon: string;
-  subcategories: SubCategory[];
+  slug: string;
+  children: CategoryChild[];
+  _count: { products: number };
 }
 
-export default function Home() {
+function HomeContent() {
   const { showNotification } = useNotification();
-  const [selectedCategory, setSelectedCategory] = useState("ALL");
-  const [searchQuery, setSearchQuery] = useState("");
+  const searchParams = useSearchParams();
+  const urlSearchQuery = searchParams.get("search") || "";
+  const urlCategoryQuery = searchParams.get("category");
+  const activeTab = searchParams.get("tab");
+  const isNewsTab = activeTab === "news";
+  const isBrandsTab = activeTab === "brands";
 
-  // Hierarchical categories structure
-  const mainCategories: MainCategory[] = [
-    {
-      id: "industrial_automation",
-      name: "TỰ ĐỘNG HÓA & CÔNG NGHIỆP",
-      icon: "precision_manufacturing",
-      subcategories: [
-        { id: "SIEMENS", name: "SIEMENS INDUSTRIAL" },
-        { id: "OMRON", name: "OMRON SENSORS" },
-        { id: "CONTACTOR KHỞI ĐỘNG TỪ", name: "CONTACTOR - KHỞI ĐỘNG TỪ" },
-      ],
-    },
-    {
-      id: "electrical_components",
-      name: "THIẾT BỊ ĐIỆN DÂN DỤNG",
-      icon: "home_max",
-      subcategories: [
-        { id: "SCHNEIDER CHÍNH HÃNG GIÁ RẺ", name: "SCHNEIDER ELECTRIC" },
-        { id: "ĐÈN LED", name: "ĐÈN LED CHIẾU SÁNG" },
-      ],
-    },
-    {
-      id: "cables_and_gas",
-      name: "CÁP ĐIỆN & HỆ THỐNG GA",
-      icon: "settings_input_hdmi",
-      subcategories: [
-        { id: "DÂY ĐIỆN - CÁP ĐIỆN", name: "CÁP ĐIỆN CADIVI" },
-        { id: "KROMSCHRODER", name: "THIẾT BỊ GA KROMSCHRODER" },
-      ],
-    },
-    {
-      id: "measuring_appliances",
-      name: "ĐO LƯỜNG & KHÁC",
-      icon: "speed",
-      subcategories: [
-        { id: "ENCODER", name: "ENCODER MÃ HÓA VÒNG QUAY" },
-        { id: "BATHROOM", name: "THIẾT BỊ NHÀ TẮM" },
-      ],
-    },
-  ];
+  const [selectedCategory, setSelectedCategory] = useState(urlCategoryQuery || "ALL");
+  const [searchQuery, setSearchQuery] = useState(urlSearchQuery);
+  const [debouncedSearch, setDebouncedSearch] = useState(urlSearchQuery);
+  const [sortBy, setSortBy] = useState("newest");
+  const [products, setProducts] = useState<any[]>([]);
+  const [categories, setCategories] = useState<CategoryWithChildren[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
 
-  // State to manage expanded/collapsed status of large categories
-  const [expandedGroups, setExpandedGroups] = useState<{ [key: string]: boolean }>({
-    industrial_automation: true,
-    electrical_components: true,
-    cables_and_gas: true,
-    measuring_appliances: false,
-  });
+  useEffect(() => {
+    setSearchQuery(urlSearchQuery);
+    setDebouncedSearch(urlSearchQuery);
+    setPage(1);
+  }, [urlSearchQuery]);
 
-  const toggleGroup = (groupId: string, e: React.MouseEvent) => {
-    e.stopPropagation(); // Avoid selecting the group if they just click the chevron arrow
-    setExpandedGroups((prev) => ({
-      ...prev,
-      [groupId]: !prev[groupId],
-    }));
-  };
+  useEffect(() => {
+    if (urlCategoryQuery) {
+      setSelectedCategory(urlCategoryQuery);
+    } else {
+      setSelectedCategory("ALL");
+    }
+    setPage(1);
+  }, [urlCategoryQuery]);
+
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setDebouncedSearch(searchQuery.trim());
+      setPage(1);
+    }, 300);
+    return () => clearTimeout(t);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    if (isNewsTab || isBrandsTab) return;
+
+    fetch("/api/categories")
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data)) setCategories(data);
+      })
+      .catch(console.error);
+  }, [isNewsTab, isBrandsTab]);
+
+  useEffect(() => {
+    if (isNewsTab || isBrandsTab) {
+      setLoading(false);
+      return;
+    }
+
+    const fetchProducts = async () => {
+      setLoading(true);
+      try {
+        const params = new URLSearchParams({
+          page: String(page),
+          limit: "12",
+          sort: sortBy,
+        });
+        if (selectedCategory !== "ALL") params.set("category", selectedCategory);
+        if (debouncedSearch) params.set("search", debouncedSearch);
+
+        const res = await fetch(`/api/products?${params}`);
+        const data = await res.json();
+        setProducts(Array.isArray(data.items) ? data.items : []);
+        setTotalPages(data.totalPages || 1);
+        setTotal(data.total || 0);
+      } catch (error) {
+        console.error("Failed to fetch products", error);
+        setProducts([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProducts();
+  }, [isNewsTab, isBrandsTab, page, selectedCategory, debouncedSearch, sortBy]);
 
   const handleCategorySelect = (catId: string, catName: string) => {
     setSelectedCategory(catId);
+    setPage(1);
     showNotification(`Đã lọc danh mục: ${catName}`, "info");
   };
 
-  // Helper to check if a product matches selected hierarchical filters
-  const matchesCategoryFilter = (productCategory: string) => {
-    if (selectedCategory === "ALL") return true;
+  if (isNewsTab) {
+    return (
+      <div className="min-h-screen flex flex-col fe-bg-gradient">
+        <Header />
+        <main className="w-[85%] mx-auto py-8 flex-grow">
+          <NewsList showBanner listBasePath="/news" pageSize={12} />
+        </main>
+        <Footer />
+        <BackToTopButton />
+      </div>
+    );
+  }
 
-    // Check if the selected category is a main category
-    const mainCat = mainCategories.find((cat) => cat.id === selectedCategory);
-    if (mainCat) {
-      // Show products belonging to ANY of its subcategories
-      return mainCat.subcategories.some((sub) => sub.id === productCategory);
-    }
-
-    // Otherwise, check direct match on subcategory ID
-    return productCategory === selectedCategory;
-  };
-
-  // Filter products based on active category & search query
-  const filteredProducts = products.filter((prod) => {
-    const matchesCategory = matchesCategoryFilter(prod.category);
-    const matchesSearch =
-      prod.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      prod.brand.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      prod.sku.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesSearch;
-  });
+  if (isBrandsTab) {
+    return (
+      <div className="min-h-screen flex flex-col fe-bg-gradient">
+        <Header />
+        <main className="w-[85%] mx-auto py-8 flex-grow">
+          <BrandsTabSection />
+        </main>
+        <Footer />
+        <BackToTopButton />
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen flex flex-col bg-surface">
+    <div className="min-h-screen flex flex-col fe-bg-gradient">
       <Header />
 
-      <main className="max-w-screen-2xl mx-auto px-8 py-8 flex flex-col lg:flex-row gap-8 w-full flex-grow">
-        {/* SideNavBar Strategy: Hierarchical Sidebar Category List */}
+      <main className="w-[85%] mx-auto py-8 flex flex-col lg:flex-row gap-8 flex-grow">
         <aside className="w-full lg:w-72 flex flex-col gap-2 shrink-0">
-          <div className="bg-surface rounded-2xl overflow-hidden shadow-sm border border-outline-variant">
-            <div className="px-6 py-4 border-b border-outline-variant bg-surface-container-low/50">
+          <div className="bg-surface rounded-2xl shadow-sm border border-outline-variant relative z-20">
+            <div className="px-6 py-4 border-b border-outline-variant bg-surface-container-low/50 rounded-t-2xl">
               <h2 className="text-on-surface text-xs uppercase tracking-widest font-bold font-headline select-none">
                 DANH MỤC THIẾT BỊ
               </h2>
             </div>
-            
-            <nav className="flex flex-col py-2 max-h-[600px] lg:max-h-none overflow-y-auto">
-              {/* All Products Row */}
+
+            <nav className="flex flex-col py-2">
               <div
                 onClick={() => handleCategorySelect("ALL", "TẤT CẢ SẢN PHẨM")}
                 className={`flex items-center gap-2.5 px-4 py-2.5 mx-2 my-0.5 cursor-pointer transition-all duration-200 rounded-xl group ${
@@ -139,65 +173,63 @@ export default function Home() {
                 <span className="text-xs font-bold uppercase tracking-tight">TẤT CẢ THIẾT BỊ</span>
               </div>
 
-              {mainCategories.map((group) => {
-                const isGroupExpanded = expandedGroups[group.id];
+              {categories.map((group) => {
                 const isGroupActive = selectedCategory === group.id;
+                const hasChildren = group.children && group.children.length > 0;
 
                 return (
-                  <div key={group.id} className="flex flex-col">
-                    {/* Large Category Header Row */}
+                  <div key={group.id} className="relative group/category">
                     <div
                       onClick={() => handleCategorySelect(group.id, group.name)}
-                      className={`flex items-center justify-between px-4 py-2.5 mx-2 my-0.5 cursor-pointer transition-all duration-200 rounded-xl group ${
+                      className={`flex items-center justify-between px-4 py-2.5 mx-2 my-0.5 cursor-pointer transition-all duration-200 rounded-xl ${
                         isGroupActive
                           ? "bg-primary/10 text-primary font-bold border border-primary/20"
                           : "hover:bg-surface-container-low text-on-surface-variant hover:text-on-surface"
                       }`}
                     >
-                      <div className="flex items-center gap-2.5">
-                        <span className="material-symbols-outlined text-lg transition-colors">
-                          {group.icon}
+                      <span className="text-xs font-bold uppercase tracking-tight truncate flex-1">
+                        {group.name}
+                      </span>
+                      {hasChildren && (
+                        <span className="material-symbols-outlined text-[16px] text-outline group-hover/category:text-primary group-hover/category:translate-x-0.5 transition-all shrink-0 ml-2">
+                          chevron_right
                         </span>
-                        <span className="text-xs font-bold uppercase tracking-tight">
-                          {group.name}
-                        </span>
-                      </div>
-                      
-                      {/* Accordion Expand/Collapse arrow */}
-                      <button
-                        onClick={(e) => toggleGroup(group.id, e)}
-                        className="p-1 hover:bg-surface-container-high rounded-lg transition-all text-outline hover:text-on-surface active:scale-90 flex items-center justify-center"
-                      >
-                        <span className={`material-symbols-outlined text-sm transition-transform duration-300 ${
-                          isGroupExpanded ? "rotate-180" : ""
-                        }`}>
-                          keyboard_arrow_down
-                        </span>
-                      </button>
+                      )}
                     </div>
 
-                    {/* Nested Subcategories */}
-                    {isGroupExpanded && (
-                      <div className="flex flex-col pl-9 pr-4 pb-2 ml-4 mb-1 space-y-1 border-l-2 border-outline-variant/60 animate-slide-down">
-                        {group.subcategories.map((sub) => {
-                          const isSubActive = selectedCategory === sub.id;
-                          return (
-                            <button
-                              key={sub.id}
-                              onClick={() => handleCategorySelect(sub.id, sub.name)}
-                              className={`py-1.5 px-3 rounded-lg text-[11px] font-semibold tracking-tight text-left transition-all duration-200 flex items-center gap-2 ${
-                                isSubActive
-                                  ? "text-primary font-bold bg-primary/10"
-                                  : "text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low"
-                              }`}
-                            >
-                              <span className={`w-1.5 h-1.5 rounded-full transition-transform ${
-                                isSubActive ? "bg-primary scale-125" : "bg-outline"
-                              }`} />
-                              <span>{sub.name}</span>
-                            </button>
-                          );
-                        })}
+                    {hasChildren && (
+                      <div className="absolute left-full top-0 ml-1.5 hidden group-hover/category:flex flex-col bg-surface border border-outline-variant shadow-2xl rounded-2xl min-w-[220px] max-w-[280px] p-2 z-50 animate-in fade-in slide-in-from-left-2 duration-150 before:absolute before:-left-3 before:top-0 before:w-3 before:h-full before:content-['']">
+                        <div className="px-3 py-1.5 border-b border-outline-variant/50 mb-1">
+                          <span className="text-[11px] font-bold text-on-surface uppercase tracking-wider">
+                            {group.name}
+                          </span>
+                        </div>
+                        <div className="flex flex-col space-y-0.5">
+                          {group.children.map((sub) => {
+                            const isSubActive = selectedCategory === sub.id;
+                            return (
+                              <button
+                                key={sub.id}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleCategorySelect(sub.id, sub.name);
+                                }}
+                                className={`py-2 px-3 rounded-xl text-xs font-semibold text-left transition-all duration-200 flex items-center justify-between group/sub cursor-pointer ${
+                                  isSubActive
+                                    ? "text-primary font-bold bg-primary/10"
+                                    : "text-on-surface-variant hover:text-primary hover:bg-surface-container-low"
+                                }`}
+                              >
+                                <span className="truncate">{sub.name}</span>
+                                {sub._count?.products > 0 && (
+                                  <span className="text-[10px] text-outline/70 bg-surface-container px-1.5 py-0.5 rounded-md ml-2 shrink-0">
+                                    {sub._count.products}
+                                  </span>
+                                )}
+                              </button>
+                            );
+                          })}
+                        </div>
                       </div>
                     )}
                   </div>
@@ -205,8 +237,7 @@ export default function Home() {
               })}
             </nav>
           </div>
- 
-          {/* Glowing Sidebar Contact Banner */}
+
           <div className="mt-4 p-6 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-2xl text-white shadow-xl shadow-blue-500/15 relative overflow-hidden group">
             <span className="material-symbols-outlined text-4xl text-cyan-200 mb-3 animate-pulse select-none">
               bolt
@@ -217,7 +248,7 @@ export default function Home() {
             <p className="text-xs text-blue-100 mt-1 leading-relaxed select-none">
               Đội ngũ kỹ sư Thiên Nhật Minh tư vấn giải pháp năng lượng mặt trời.
             </p>
-            <button 
+            <button
               onClick={() => showNotification("Kỹ sư hỗ trợ đang kết nối...", "info")}
               className="mt-4 w-full py-2.5 bg-white text-blue-900 hover:bg-blue-50 font-bold rounded-xl text-xs uppercase tracking-widest transition-all duration-300 shadow-md active:scale-95 cursor-pointer"
             >
@@ -225,33 +256,14 @@ export default function Home() {
             </button>
           </div>
         </aside>
- 
-        {/* Main Content Canvas */}
+
         <section className="flex-1">
-          {/* Hero Banner for Product Page */}
-          <div className="relative w-full h-48 rounded-2xl overflow-hidden mb-8 group shadow-sm border border-outline-variant/5">
-            <img
-              alt="Electrical Infrastructure"
-              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-103"
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuBDldz8IsRitbau6RdQBqDy78r-naGY9HTMdpNG0MFZNKOQWYC8GyjQWX6qxOcV5oWxWZDfyT27XBXoJl13R0T--wKl5XENBFvdvXNDgedDtuIQ4sQj-vlOJAv0KDLhBXXpdvf9AQO6n6BFHlCTopEKNR9EOMSncHTeULJlpjlLXce7VqrtRrtci2WKqZxP-CawxsSJFN62gQQZ394uvCDucZtpuinRuHWtdgAvsN0uojY3ZT2G0AWtbronz4z3YPdq8vqQddB-N_nY"
-            />
-            <div className="absolute inset-0 bg-gradient-to-r from-primary/85 to-transparent flex flex-col justify-center px-12">
-              <h1 className="text-white text-3xl sm:text-4xl font-bold tracking-tight mb-2 font-headline select-none">
-                DANH MỤC THIẾT BỊ
-              </h1>
-              <p className="text-amber-400 font-medium tracking-widest uppercase text-sm select-none">
-                Precision Power Engineering Solutions
-              </p>
-            </div>
-          </div>
- 
-          {/* Search Bar in Content Area for extra utility */}
-          <div className="mb-6 flex flex-col sm:flex-row gap-4 items-center justify-between">
-            <div className="w-full max-w-md relative">
+          <div className="mb-6 flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
+            <div className="w-full sm:flex-1 relative">
               <input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-surface-container-high/40 border border-outline-variant/10 rounded-xl px-4 py-2.5 pl-10 focus:ring-2 focus:ring-surface-tint focus:bg-white transition-all text-sm outline-none text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500"
+                className="w-full bg-surface border border-outline-variant rounded-xl px-4 py-2.5 pl-10 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm outline-none text-slate-800 placeholder-slate-400"
                 placeholder="Tìm kiếm sản phẩm kỹ thuật..."
                 type="text"
               />
@@ -259,104 +271,70 @@ export default function Home() {
                 search
               </span>
             </div>
-
-            <div className="flex gap-4 shrink-0 w-full sm:w-auto">
-              <div 
-                onClick={() => showNotification("Tính năng lọc theo hãng đang được xây dựng.", "info")}
-                className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-slate-500/5 hover:bg-slate-500/10 border border-outline-variant/10 px-4 py-2.5 rounded-lg text-sm cursor-pointer transition-all active:scale-98"
+            <div className="relative w-full sm:w-56 shrink-0">
+              <select
+                value={sortBy}
+                onChange={(e) => {
+                  setSortBy(e.target.value);
+                  setPage(1);
+                }}
+                className="w-full appearance-none bg-surface border border-outline-variant rounded-xl px-4 py-2.5 pr-10 text-sm font-medium text-on-surface outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary cursor-pointer"
               >
-                <span className="material-symbols-outlined text-sm select-none">
-                  filter_list
-                </span>
-                <span className="select-none">Lọc theo hãng</span>
-              </div>
-              <div 
-                onClick={() => showNotification("Danh sách đã được sắp xếp tự động.", "info")}
-                className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-slate-500/5 hover:bg-slate-500/10 border border-outline-variant/10 px-4 py-2.5 rounded-lg text-sm cursor-pointer transition-all active:scale-98"
-              >
-                <span className="material-symbols-outlined text-sm select-none">sort</span>
-                <span className="select-none">Mới nhất</span>
-              </div>
+                <option value="newest">Sản phẩm mới nhất</option>
+                <option value="price_asc">Giá thấp → cao</option>
+                <option value="price_desc">Giá cao → thấp</option>
+                <option value="name_asc">Thứ tự A → Z</option>
+              </select>
+              <span className="material-symbols-outlined absolute right-3 top-2.5 text-outline text-lg pointer-events-none select-none">
+                expand_more
+              </span>
             </div>
           </div>
 
-          {/* Toolbar / Filters info */}
-          <div className="flex justify-between items-center mb-6 px-2 select-none">
+          <div className="flex justify-between items-center mb-6 px-1 select-none">
             <p className="text-sm text-on-surface-variant font-medium">
-              Hiển thị{" "}
-              <span className="text-primary font-bold">
-                {filteredProducts.length}
-              </span>{" "}
-              sản phẩm
+              Hiển thị <span className="text-primary font-bold">{products.length}</span> / {total} sản phẩm
             </p>
           </div>
 
-          {/* Product Grid */}
-          {filteredProducts.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-              {filteredProducts.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
+          {loading ? (
+            <div className="flex justify-center items-center py-20">
+              <span className="material-symbols-outlined animate-spin text-4xl text-primary">autorenew</span>
             </div>
+          ) : products.length > 0 ? (
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                {products.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </div>
+              <Pagination page={page} totalPages={totalPages} onChange={setPage} />
+            </>
           ) : (
             <div className="bg-surface-container-lowest/80 backdrop-blur-sm rounded-xl p-12 text-center border border-outline-variant/10 shadow-sm">
-              <span className="material-symbols-outlined text-6xl text-outline mb-4">
-                search_off
-              </span>
-              <h3 className="text-lg font-bold text-primary font-headline">
-                Không tìm thấy sản phẩm
-              </h3>
+              <span className="material-symbols-outlined text-6xl text-outline mb-4">search_off</span>
+              <h3 className="text-lg font-bold text-primary font-headline">Không tìm thấy sản phẩm</h3>
               <p className="text-sm text-slate-500 mt-2">
                 Hãy thử thay đổi danh mục hoặc từ khóa tìm kiếm khác.
               </p>
             </div>
           )}
-
-          {/* Pagination */}
-          <div className="mt-12 flex justify-center gap-2">
-            <button className="w-10 h-10 flex items-center justify-center rounded-lg bg-white border border-outline-variant/20 text-primary font-bold shadow-sm active:scale-90 transition-all">
-              1
-            </button>
-            <button 
-              onClick={() => showNotification("Đang tải dữ liệu trang tiếp theo...", "info")}
-              className="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-200/60 dark:bg-slate-800/60 text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 hover:text-primary transition-all border border-transparent hover:border-outline-variant/10 active:scale-90 font-bold"
-            >
-              2
-            </button>
-            <button 
-              onClick={() => showNotification("Đang tải dữ liệu trang tiếp theo...", "info")}
-              className="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-200/60 dark:bg-slate-800/60 text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 hover:text-primary transition-all border border-transparent hover:border-outline-variant/10 active:scale-90 font-bold"
-            >
-              3
-            </button>
-            <button 
-              onClick={() => showNotification("Đang tải dữ liệu trang tiếp theo...", "info")}
-              className="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-200/60 dark:bg-slate-800/60 text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 hover:text-primary transition-all border border-transparent hover:border-outline-variant/10 active:scale-90 font-bold"
-            >
-              <span className="material-symbols-outlined text-base">chevron_right</span>
-            </button>
-          </div>
         </section>
       </main>
 
+      <HomeNewsSection />
+      <CustomersSection />
+      <QuoteRequestSection />
       <Footer />
-
-      {/* Embedded Animations styles */}
-      <style jsx global>{`
-        @keyframes slideDown {
-          from {
-            opacity: 0;
-            transform: translateY(-8px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        .animate-slide-down {
-          animation: slideDown 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        }
-      `}</style>
+      <BackToTopButton />
     </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-surface" />}>
+      <HomeContent />
+    </Suspense>
   );
 }

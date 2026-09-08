@@ -1,7 +1,8 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useRef } from "react";
 import { Product } from "@/data/products";
+import { useSession } from "next-auth/react";
 
 export interface CartItem {
   product: Product;
@@ -19,93 +20,175 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
+const GUEST_CART_KEY = "volt_guest_cart";
+
+const getGuestCart = (): CartItem[] => {
+  if (typeof window === "undefined") return [];
+  const raw = localStorage.getItem(GUEST_CART_KEY) || localStorage.getItem("volt_cart");
+  if (!raw) return [];
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return [];
+  }
+};
+
+const clearGuestCart = () => {
+  if (typeof window === "undefined") return;
+  localStorage.removeItem(GUEST_CART_KEY);
+  localStorage.removeItem("volt_cart");
+};
+
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
+  const { data: session, status } = useSession();
+  const prevUserEmailRef = useRef<string | null | undefined>(undefined);
 
-  // Load cart from localStorage on mount
+  // Load cart when auth state changes
   useEffect(() => {
-    const savedCart = localStorage.getItem("volt_cart");
-    if (savedCart) {
-      try {
-        setItems(JSON.parse(savedCart));
-      } catch (e) {
-        console.error("Failed to parse cart", e);
+    if (status === "loading") return;
+
+    const currentEmail = session?.user?.email || null;
+
+    if (session?.user) {
+      // User is logged in
+      const guestCart = getGuestCart();
+
+      if (guestCart.length > 0) {
+        // Merge flow
+        const itemsToMerge = guestCart.map((item) => ({
+          productId: item.product.id,
+          quantity: item.quantity
+        }));
+
+        fetch('/api/cart', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ items: itemsToMerge })
+        })
+          .then(() => {
+            clearGuestCart();
+            return fetch('/api/cart');
+          })
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.items && Array.isArray(data.items)) setItems(data.items);
+          })
+          .catch((e) => console.error("Failed to merge cart API", e));
+      } else {
+        // Normal fetch flow for logged in user
+        fetch('/api/cart')
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.items && Array.isArray(data.items)) setItems(data.items);
+          })
+          .catch((e) => console.error("Failed to fetch cart API", e));
       }
     } else {
-      // Default initial mock items in cart from original HTML
-      const defaultItems = [
-        {
-          product: {
-            id: "dong-anh-250kva",
-            name: "MÁY BIẾN ÁP ĐÔNG ANH 250KVA",
-            sku: "VA-TR-250-DA",
-            brand: "VOLT ARCHITECT",
-            image: "https://lh3.googleusercontent.com/aida-public/AB6AXuBsPRBuZIEjISxPBmYErBGDkwPkAaxFyUN4Siure8LqBL_cT5EpkXbMJ3FucjmVzKx-gCfTcshEuReVMbREYyMwywUnVHzbVYtCrRGN9k7-NM4hY5lEV9CNOtXhdVjBJrpmAVTEElu2nrkccH--RhhH1m-XXsTfcf7hgGuIoxXO-cVeql5boN07CBk_YPVmDSEo_jXxvTGkNLZaOOHyYMezrVknH4pibFa0GMeLzmU0zJlh9w8g8hZKqSwJ_Z4BuYZXxZw-8Zg8wS1J",
-            price: "145.000.000 đ",
-            numericPrice: 145000000,
-            inStock: true,
-            description: "Máy biến áp chất lượng cao sản xuất bởi công ty Thiết bị điện Đông Anh.",
-            category: "CONTACTOR KHỞI ĐỘNG TỪ",
-          },
-          quantity: 1,
-        },
-        {
-          product: {
-            id: "cadivi-cv-150",
-            name: "CÁP ĐIỆN CADIVI CV-150MM2",
-            sku: "VA-CA-150-CD",
-            brand: "CADIVI",
-            image: "https://lh3.googleusercontent.com/aida-public/AB6AXuAJ7ypCawmgeBmkX29gFhOzWuYouhw0TIcic5dqVI_JTc6r4oAdV6SgYBjJblTrbIkaF0J6oO3SHFSw8gk8t46Ca856Z5C8bCR9x1X7M66zZOas_Ya5KtiH-M1wyMu8UjGk8tJAvtQlxFD3qwKk0OOkMnSQI6YZq1PPt7zXigcSiY_8IqXaz5DvP_bGzr3j9gLnM-7XaIw7_6yoGK2tor0Q7jUG1ryjIsKjHdz7HSuieWMLGNy3hGsMomMilKfbfs0o1yUFcf6UNpRH",
-            price: "245.000 đ/m",
-            numericPrice: 245000,
-            inStock: true,
-            description: "Cáp điện hạ thế 3 pha CV 150mm2 chất lượng cao từ hãng CADIVI.",
-            category: "DÂY ĐIỆN - CÁP ĐIỆN",
-          },
-          quantity: 50,
-        },
-      ];
-      setItems(defaultItems);
-      localStorage.setItem("volt_cart", JSON.stringify(defaultItems));
+      // User is logged out (guest)
+      const guestCart = getGuestCart();
+      setItems(guestCart);
     }
-  }, []);
 
-  // Save cart to localStorage on changes
-  const saveCart = (newItems: CartItem[]) => {
-    setItems(newItems);
-    localStorage.setItem("volt_cart", JSON.stringify(newItems));
-  };
+    prevUserEmailRef.current = currentEmail;
+  }, [session?.user?.email, status]);
 
-  const addToCart = (product: Product, quantity: number) => {
+  const addToCart = async (product: Product, quantity: number) => {
+    const prevItems = [...items];
     const existingIndex = items.findIndex((item) => item.product.id === product.id);
+    const updated = [...items];
+
     if (existingIndex > -1) {
-      const updated = [...items];
-      updated[existingIndex].quantity += quantity;
-      saveCart(updated);
+      updated[existingIndex] = {
+        ...updated[existingIndex],
+        quantity: updated[existingIndex].quantity + quantity
+      };
     } else {
-      saveCart([...items, { product, quantity }]);
+      updated.push({ product, quantity });
+    }
+
+    setItems(updated);
+
+    if (session?.user) {
+      try {
+        const res = await fetch('/api/cart', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ productId: product.id, quantity })
+        });
+        if (!res.ok) throw new Error("API Failed");
+      } catch (error) {
+        console.error("Failed to add to cart API", error);
+        setItems(prevItems);
+      }
+    } else {
+      localStorage.setItem(GUEST_CART_KEY, JSON.stringify(updated));
     }
   };
 
-  const updateQuantity = (productId: string, delta: number) => {
-    const updated = items
-      .map((item) => {
-        if (item.product.id === productId) {
-          const newQty = Math.max(1, item.quantity + delta);
-          return { ...item, quantity: newQty };
-        }
-        return item;
-      });
-    saveCart(updated);
+  const updateQuantity = async (productId: string, delta: number) => {
+    const prevItems = [...items];
+    const updated = items.map((item) => {
+      if (item.product.id === productId) {
+        return { ...item, quantity: Math.max(1, item.quantity + delta) };
+      }
+      return item;
+    });
+
+    setItems(updated);
+
+    if (session?.user) {
+      try {
+        const res = await fetch('/api/cart/item', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ productId, delta })
+        });
+        if (!res.ok) throw new Error("API Failed");
+      } catch (error) {
+        console.error("Failed to update cart item API", error);
+        setItems(prevItems);
+      }
+    } else {
+      localStorage.setItem(GUEST_CART_KEY, JSON.stringify(updated));
+    }
   };
 
-  const removeFromCart = (productId: string) => {
+  const removeFromCart = async (productId: string) => {
+    const prevItems = [...items];
     const updated = items.filter((item) => item.product.id !== productId);
-    saveCart(updated);
+    setItems(updated);
+
+    if (session?.user) {
+      try {
+        const res = await fetch(`/api/cart?productId=${encodeURIComponent(productId)}`, {
+          method: 'DELETE'
+        });
+        if (!res.ok) throw new Error("API Failed");
+      } catch (error) {
+        console.error("Failed to remove cart item API", error);
+        setItems(prevItems);
+      }
+    } else {
+      localStorage.setItem(GUEST_CART_KEY, JSON.stringify(updated));
+    }
   };
 
-  const clearCart = () => {
-    saveCart([]);
+  const clearCart = async () => {
+    const prevItems = [...items];
+    setItems([]);
+
+    if (session?.user) {
+      try {
+        const res = await fetch('/api/cart', { method: 'DELETE' });
+        if (!res.ok) throw new Error("API Failed");
+      } catch (error) {
+        console.error("Failed to clear cart API", error);
+        setItems(prevItems);
+      }
+    } else {
+      clearGuestCart();
+    }
   };
 
   const itemCount = items.reduce((acc, item) => acc + item.quantity, 0);

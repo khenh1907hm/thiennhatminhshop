@@ -1,15 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import Link from "next/link";
 import { useCart } from "@/context/CartContext";
 import { useNotification } from "@/context/NotificationContext";
+import { useSession } from "next-auth/react";
+import { formatPrice, applyPromotion, type PromoLike } from "@/lib/formatPrice";
 
 export default function Cart() {
   const { items, updateQuantity, removeFromCart, clearCart } = useCart();
   const { showNotification } = useNotification();
+  const { data: session } = useSession();
 
   // Mode: 'cart' | 'checkout'
   const [checkoutStep, setCheckoutStep] = useState<"cart" | "checkout">("cart");
@@ -30,19 +33,73 @@ export default function Cart() {
     paymentMethod: "cod" // 'cod' | 'qr'
   });
 
+  const [promoCode, setPromoCode] = useState("");
+  const [appliedPromo, setAppliedPromo] = useState<PromoLike | null>(null);
+  const [promoMsg, setPromoMsg] = useState<string | null>(null);
+  const [validatingPromo, setValidatingPromo] = useState(false);
+
+  useEffect(() => {
+    if (session?.user) {
+      setIsGuest(false);
+      setCustomerInfo(prev => ({
+        ...prev,
+        fullName: session?.user?.name || prev.fullName,
+        email: session?.user?.email || prev.email,
+      }));
+      // Thêm phần fetch API profile để lấy address/phone nếu cần
+      fetch('/api/user/profile').then(res => res.json()).then(data => {
+        if (data.phone || data.address) {
+          setCustomerInfo(prev => ({
+            ...prev,
+            phone: data.phone || prev.phone,
+            addressDetail: data.address || prev.addressDetail,
+          }));
+        }
+      }).catch(e => {});
+    }
+  }, [session]);
+
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [orderSuccessId, setOrderSuccessId] = useState<string | null>(null);
 
   // Calculations
-  const subtotal = items.reduce((acc, item) => acc + item.product.numericPrice * item.quantity, 0);
-  const vat = subtotal * 0.1;
-  const total = subtotal + vat;
+  const subtotal = items.reduce((acc, item) => acc + (item.product.numericPrice || Number(item.product.price) || 0) * item.quantity, 0);
+  const priced = applyPromotion(subtotal, appliedPromo);
+  const discountAmount = priced.originalPrice != null ? subtotal - priced.price : 0;
+  const taxable = priced.price;
+  const vat = taxable * 0.1;
+  const total = taxable + vat;
 
-  const formatCurrency = (val: number) => {
-    return new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND",
-    }).format(val);
+  const formatCurrency = (val: number) => formatPrice(val);
+
+  const applyPromoCode = async () => {
+    const code = promoCode.trim().toUpperCase();
+    if (!code) {
+      setAppliedPromo(null);
+      setPromoMsg(null);
+      return;
+    }
+    setValidatingPromo(true);
+    setPromoMsg(null);
+    try {
+      const res = await fetch(`/api/promotions/validate?code=${encodeURIComponent(code)}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Mã không hợp lệ");
+      setAppliedPromo({
+        code: data.code,
+        discountType: data.discountType,
+        discountValue: data.discountValue,
+      });
+      setPromoCode(data.code);
+      setPromoMsg(`Đã áp dụng mã ${data.code}`);
+      showNotification(`Áp dụng mã ${data.code} thành công`, "success");
+    } catch (err: any) {
+      setAppliedPromo(null);
+      setPromoMsg(err.message || "Mã không hợp lệ");
+      showNotification(err.message || "Mã không hợp lệ", "error");
+    } finally {
+      setValidatingPromo(false);
+    }
   };
 
   const handleRemove = (productId: string, productName: string) => {
@@ -50,7 +107,7 @@ export default function Cart() {
     showNotification(`Đã xóa ${productName} khỏi giỏ hàng.`, "info");
   };
 
-  const handlePlaceOrder = (e: React.FormEvent) => {
+  const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!customerInfo.fullName || !customerInfo.phone || !customerInfo.addressDetail) {
@@ -59,13 +116,39 @@ export default function Cart() {
     }
 
     setIsProcessingPayment(true);
-    setTimeout(() => {
-      setIsProcessingPayment(false);
-      const generatedId = "ORD-" + Math.floor(100000 + Math.random() * 900000);
-      setOrderSuccessId(generatedId);
+    try {
+      const res = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customerName: customerInfo.fullName,
+          customerPhone: customerInfo.phone,
+          customerEmail: customerInfo.email,
+          shippingAddress: `${customerInfo.addressDetail}, ${customerInfo.ward}, ${customerInfo.district}, ${customerInfo.province}`,
+          note: customerInfo.note,
+          paymentMethod: customerInfo.paymentMethod,
+          items: items.map(item => ({
+            productId: item.product.id,
+            quantity: item.quantity,
+            price: item.product.numericPrice || Number(item.product.price) || 0
+          })),
+          totalAmount: total
+        })
+      });
+
+      const data = await res.json();
+      
+      if (!res.ok) throw new Error(data.error || "Có lỗi xảy ra khi đặt hàng");
+
+      setOrderSuccessId(data.order.orderNumber);
       clearCart();
       showNotification("Đặt hàng thành công!", "success");
-    }, 2000);
+    } catch (error: any) {
+      console.error(error);
+      showNotification(error.message, "error");
+    } finally {
+      setIsProcessingPayment(false);
+    }
   };
 
   return (
@@ -164,7 +247,7 @@ export default function Cart() {
                         {items.map(({ product, quantity }) => (
                           <div key={product.id} className="p-4 sm:p-6 flex items-center gap-4 hover:bg-surface-container-low/30 transition-colors">
                             <img
-                              src={product.image}
+                              src={(product as any).images?.[0] || product.image || 'https://via.placeholder.com/150'}
                               alt={product.name}
                               className="w-20 h-20 object-contain rounded-lg border border-outline-variant bg-white p-1 shrink-0"
                             />
@@ -174,7 +257,7 @@ export default function Cart() {
                               </h3>
                               <p className="text-xs text-outline font-mono mt-0.5">SKU: {product.sku}</p>
                               <div className="text-sm font-bold text-primary font-headline mt-1">
-                                {product.price}
+                                {formatCurrency(product.numericPrice || Number(product.price) || 0)}
                               </div>
                             </div>
                             <div className="flex items-center gap-2 bg-surface-container-low border border-outline-variant rounded-lg p-1">
@@ -370,31 +453,82 @@ export default function Cart() {
 
                 {/* Right Column: Order Summary Card */}
                 <div className="lg:col-span-5">
-                  <div className="bg-primary text-on-primary rounded-3xl p-6 sm:p-8 sticky top-24 shadow-xl space-y-6">
-                    <h2 className="text-xl font-bold tracking-tight font-headline border-b border-white/10 pb-4">
-                      TỔNG ĐƠN HÀNG
+                  <div className="bg-slate-800 text-slate-100 rounded-2xl p-6 sm:p-7 sticky top-24 border border-slate-700/80 shadow-lg space-y-5">
+                    <h2 className="text-lg font-semibold tracking-tight font-headline border-b border-slate-600/60 pb-3 text-white">
+                      Tổng đơn hàng
                     </h2>
 
-                    <div className="space-y-3 text-sm border-b border-white/10 pb-6 text-slate-200">
+                    <div className="space-y-2">
+                      <label className="block text-xs font-medium text-slate-400 uppercase tracking-wide">
+                        Mã khuyến mãi
+                      </label>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={promoCode}
+                          onChange={(e) => {
+                            setPromoCode(e.target.value.toUpperCase());
+                            setAppliedPromo(null);
+                            setPromoMsg(null);
+                          }}
+                          placeholder="Nhập mã..."
+                          className="flex-1 min-w-0 px-3 py-2.5 rounded-lg bg-slate-900/60 border border-slate-600 text-sm text-white placeholder:text-slate-500 outline-none focus:border-slate-400 font-mono uppercase"
+                        />
+                        <button
+                          type="button"
+                          onClick={applyPromoCode}
+                          disabled={validatingPromo || !promoCode.trim()}
+                          className="px-3.5 py-2.5 rounded-lg bg-slate-100 text-slate-900 text-xs font-semibold hover:bg-white disabled:opacity-50 shrink-0"
+                        >
+                          {validatingPromo ? "..." : "Áp dụng"}
+                        </button>
+                      </div>
+                      {promoMsg && (
+                        <p className={`text-xs ${appliedPromo ? "text-emerald-400" : "text-rose-300"}`}>
+                          {promoMsg}
+                        </p>
+                      )}
+                      {appliedPromo && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setAppliedPromo(null);
+                            setPromoCode("");
+                            setPromoMsg(null);
+                          }}
+                          className="text-[11px] text-slate-400 underline hover:text-slate-200"
+                        >
+                          Bỏ mã khuyến mãi
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="space-y-2.5 text-sm border-b border-slate-600/60 pb-5 text-slate-300">
                       <div className="flex justify-between">
                         <span>Tạm tính ({items.length} món):</span>
-                        <span className="font-semibold text-white">{formatCurrency(subtotal)}</span>
+                        <span className="font-medium text-white">{formatCurrency(subtotal)}</span>
                       </div>
+                      {discountAmount > 0 && (
+                        <div className="flex justify-between text-emerald-400">
+                          <span>Giảm giá ({appliedPromo?.code}):</span>
+                          <span className="font-medium">−{formatCurrency(discountAmount)}</span>
+                        </div>
+                      )}
                       <div className="flex justify-between">
                         <span>Thuế VAT (10%):</span>
-                        <span className="font-semibold text-white">{formatCurrency(vat)}</span>
+                        <span className="font-medium text-white">{formatCurrency(vat)}</span>
                       </div>
                       <div className="flex justify-between">
                         <span>Phí tư vấn kỹ thuật:</span>
-                        <span className="text-amber-400 font-bold">MIỄN PHÍ</span>
+                        <span className="text-slate-200 font-medium">Miễn phí</span>
                       </div>
                     </div>
 
                     <div className="flex justify-between items-end">
-                      <span className="text-xs uppercase tracking-widest text-slate-300 font-headline">
-                        TỔNG CỘNG
+                      <span className="text-xs uppercase tracking-wider text-slate-400 font-headline">
+                        Tổng cộng
                       </span>
-                      <span className="text-3xl font-black text-white font-headline">
+                      <span className="text-2xl font-bold text-white font-headline">
                         {formatCurrency(total)}
                       </span>
                     </div>
@@ -402,9 +536,9 @@ export default function Cart() {
                     {checkoutStep === "cart" ? (
                       <button
                         onClick={() => setCheckoutStep("checkout")}
-                        className="w-full py-4 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-xl uppercase tracking-wider text-sm transition-all shadow-lg active:scale-98 flex items-center justify-center gap-2"
+                        className="w-full py-3.5 bg-slate-100 hover:bg-white text-slate-900 font-semibold rounded-xl text-sm transition-all border border-slate-300 flex items-center justify-center gap-2"
                       >
-                        TIẾN HÀNH ĐIỀN THÔNG TIN GIAO HÀNG
+                        Tiến hành điền thông tin giao hàng
                         <span className="material-symbols-outlined text-lg">arrow_forward</span>
                       </button>
                     ) : (
@@ -412,13 +546,13 @@ export default function Cart() {
                         type="button"
                         onClick={handlePlaceOrder}
                         disabled={isProcessingPayment}
-                        className="w-full py-4 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-xl uppercase tracking-wider text-sm transition-all shadow-lg active:scale-98 flex items-center justify-center gap-2 disabled:opacity-70"
+                        className="w-full py-3.5 bg-slate-100 hover:bg-white text-slate-900 font-semibold rounded-xl text-sm transition-all border border-slate-300 flex items-center justify-center gap-2 disabled:opacity-70"
                       >
                         {isProcessingPayment ? (
-                          <span>ĐANG XỬ LÝ ĐƠN HÀNG...</span>
+                          <span>Đang xử lý đơn hàng...</span>
                         ) : (
                           <>
-                            <span>XÁC NHẬN ĐẶT HÀNG GUEST</span>
+                            <span>Xác nhận đặt hàng</span>
                             <span className="material-symbols-outlined text-lg">check</span>
                           </>
                         )}

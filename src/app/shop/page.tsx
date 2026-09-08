@@ -53,10 +53,10 @@ export default function ShopPage() {
   });
 
   return (
-    <div className="min-h-screen flex flex-col bg-surface">
+    <div className="min-h-screen flex flex-col fe-bg-gradient">
       <Header />
 
-      <main className="max-w-screen-2xl mx-auto px-4 sm:px-8 py-8 w-full flex-grow">
+      <main className="w-[85%] mx-auto py-8 flex-grow">
         {/* Banner */}
         <div className="bg-gradient-to-r from-blue-900 via-primary to-cyan-800 rounded-3xl p-8 sm:p-12 text-white shadow-lg mb-8 relative overflow-hidden">
           <div className="max-w-2xl relative z-10 space-y-2">

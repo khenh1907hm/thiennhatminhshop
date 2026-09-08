@@ -85,3 +85,307 @@
   backdrop-filter: blur(20px);
   background-color: rgba(249, 249, 253, 0.8);
 }
+
+/* Hide scrollbar for nav overflow */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Dropdown animation */
+@keyframes fadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-in {
+  animation: fadeSlideIn 0.2s ease-out forwards;
+}
+
+/* Frontend background — matches the user-supplied HSL color */
+.fe-bg-gradient {
+  background-color: hsl(212, 100%, 97%);
+}
+
+/* Public news article body — readable typography (no justify gaps) */
+.article-body {
+  color: #334155;
+  font-size: 1.0625rem;
+  line-height: 1.8;
+  text-align: left;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.article-body > *:first-child {
+  margin-top: 0;
+}
+
+.article-body > *:last-child {
+  margin-bottom: 0;
+}
+
+.article-body p {
+  margin: 0 0 1.15em;
+  text-align: left !important;
+}
+
+.article-body h1,
+.article-body h2,
+.article-body h3,
+.article-body h4 {
+  color: #0f172a;
+  font-weight: 700;
+  line-height: 1.35;
+  margin: 1.6em 0 0.65em;
+  text-align: left !important;
+}
+
+.article-body h1 { font-size: 1.75rem; }
+.article-body h2 { font-size: 1.4rem; }
+.article-body h3 { font-size: 1.2rem; }
+.article-body h4 { font-size: 1.05rem; }
+
+.article-body strong,
+.article-body b {
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.article-body a {
+  color: #2563eb;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.article-body a:hover {
+  text-decoration: underline;
+}
+
+.article-body ul,
+.article-body ol {
+  margin: 0 0 1.25em;
+  padding-left: 1.35em;
+}
+
+.article-body li {
+  margin: 0.35em 0;
+  padding-left: 0.15em;
+  text-align: left !important;
+}
+
+.article-body li > p {
+  margin: 0.2em 0;
+}
+
+.article-body img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 1.5em auto;
+  border-radius: 1rem;
+}
+
+.article-body blockquote {
+  margin: 1.25em 0;
+  padding: 0.75em 1em;
+  border-left: 4px solid #2563eb;
+  background: rgba(37, 99, 235, 0.06);
+  border-radius: 0 0.75rem 0.75rem 0;
+  color: #475569;
+  font-style: italic;
+}
+
+.article-body table {
+  width: 100%;
+  max-width: 100%;
+  border-collapse: collapse;
+  margin: 1.5em 0;
+  font-size: 0.95rem;
+  table-layout: fixed;
+  display: table;
+}
+
+.article-body th,
+.article-body td {
+  border: 1px solid #e2e8f0;
+  padding: 0.7em 1em;
+  text-align: left !important;
+  vertical-align: top;
+  word-break: break-word;
+}
+
+/* Spec tables (2 cột): cột trái nhãn, cột phải chi tiết — full width, không cột trống */
+.article-body table th:first-child,
+.article-body table td:first-child {
+  width: 36%;
+}
+
+.article-body table th:nth-child(2),
+.article-body table td:nth-child(2) {
+  width: 64%;
+}
+
+.article-body th {
+  background: #f8fafc;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.article-body iframe,
+.article-body video {
+  max-width: 100%;
+  border-radius: 0.75rem;
+  margin: 1.25em 0;
+}
+
+/* Override Quill alignment classes saved in HTML */
+.article-body .ql-align-justify,
+.article-body [class*="ql-align-justify"] {
+  text-align: left !important;
+}
+
+.article-body .ql-align-center {
+  text-align: center !important;
+}
+
+.article-body .ql-align-right {
+  text-align: right !important;
+}
+
+.article-body .ql-indent-1 { padding-left: 1.5em; }
+.article-body .ql-indent-2 { padding-left: 3em; }
+.article-body .ql-indent-3 { padding-left: 4.5em; }
+
+.news-quill-editor .ql-editor {
+  min-height: 360px;
+  font-size: 1rem;
+  line-height: 1.7;
+  text-align: left;
+}
+
+.news-quill-editor .ql-container {
+  font-family: inherit;
+}
+
+@keyframes backToTopJump {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+.animate-back-to-top-jump {
+  animation: backToTopJump 1.4s ease-in-out infinite;
+}
+
+/* Zalo float — pulse kiểu WordPress */
+@keyframes zaloPulseRing {
+  0% {
+    transform: scale(1);
+    opacity: 0.55;
+  }
+  100% {
+    transform: scale(1.85);
+    opacity: 0;
+  }
+}
+
+.zalo-float-pulse {
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background: #0068ff;
+  animation: zaloPulseRing 1.6s ease-out infinite;
+  z-index: 0;
+}
+
+.zalo-float-pulse-delay {
+  animation-delay: 0.55s;
+}
+
+/* Heading liên hệ: VN phía trước + EN mờ phía sau */
+.heading-dual {
+  position: relative;
+  display: inline-block;
+  padding: 0.85em 0.5em 0.35em;
+  text-align: center;
+}
+
+.heading-dual::before {
+  content: attr(data-en);
+  position: absolute;
+  left: 50%;
+  top: 42%;
+  transform: translate(-50%, -50%);
+  width: max-content;
+  max-width: none;
+  font-size: clamp(2rem, 6vw, 3.75rem);
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #0f172a;
+  opacity: 0.14;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 0;
+  line-height: 1;
+  text-align: center;
+  font-family: var(--font-headline), ui-sans-serif, system-ui, sans-serif;
+}
+
+.heading-dual > span {
+  position: relative;
+  z-index: 1;
+  display: inline-block;
+  text-align: center;
+}
+
+/* Căn giữa khối heading trong banner/section */
+.heading-dual-center {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+/* EN mờ trên nền tối (banner) */
+.heading-dual-on-dark::before {
+  color: #ffffff;
+  opacity: 0.18;
+}
+
+/* Logo marquee loop */
+@keyframes logoMarquee {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-50%, 0, 0); }
+}
+
+.logo-marquee {
+  overflow: hidden;
+  width: 100%;
+  mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+}
+
+.logo-marquee-track {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  align-items: center;
+  width: max-content;
+  gap: 1rem;
+  animation: logoMarquee 28s linear infinite;
+  will-change: transform;
+}
+
+.logo-marquee:hover .logo-marquee-track {
+  animation-play-state: paused;
+}
+
+

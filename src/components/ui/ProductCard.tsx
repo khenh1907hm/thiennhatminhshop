@@ -5,6 +5,7 @@ import { Product } from "@/data/products";
 import { useCart } from "@/context/CartContext";
 import { useNotification } from "@/context/NotificationContext";
 import { useWishlist } from "@/context/WishlistContext";
+import { formatPrice } from "@/lib/formatPrice";
 
 interface ProductCardProps {
   product: Product;
@@ -49,7 +50,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           <img
             alt={product.name}
             className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-105"
-            src={product.image}
+            src={Array.isArray((product as any).images) ? (product as any).images[0] : (product as any).image}
           />
           {product.inStock && (
             <div className="absolute top-3 left-3 bg-emerald-500 text-white px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 shadow-sm">
@@ -77,8 +78,8 @@ export default function ProductCard({ product }: ProductCardProps) {
           </button>
         </div>
         <div className="flex flex-col gap-1">
-          <span className="text-[10px] text-outline font-semibold uppercase tracking-wider">
-            {product.category}
+          <span className="text-[10px] text-outline font-semibold uppercase tracking-wider line-clamp-1">
+            {typeof product.category === 'string' ? product.category : (product.category as any)?.name}
           </span>
           <h3 className="text-sm font-bold text-on-surface group-hover:text-primary transition-colors line-clamp-2 font-headline">
             {product.name}
@@ -93,7 +94,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         <div>
           <span className="text-xs text-outline block -mb-1">Giá niêm yết</span>
           <span className="text-base font-bold text-primary font-headline">
-            {product.price}
+            {formatPrice(product.price)}
           </span>
         </div>
         
