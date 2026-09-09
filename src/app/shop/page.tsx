@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import ProductCard from "@/components/ui/ProductCard";
+import Pagination from "@/components/ui/Pagination";
 import { products } from "@/data/products";
 
 export default function ShopPage() {
@@ -14,6 +15,12 @@ export default function ShopPage() {
   const [power, setPower] = useState("all");
   const [waterResistance, setWaterResistance] = useState("all");
   const [sortBy, setSortBy] = useState("featured");
+  const [page, setPage] = useState(1);
+  const pageSize = 12;
+
+  useEffect(() => {
+    setPage(1);
+  }, [searchQuery, selectedCategory, selectedBrand, priceRange, power, waterResistance, sortBy]);
 
   const categories = [
     { id: "all", name: "Tất cả danh mục" },
@@ -52,6 +59,9 @@ export default function ShopPage() {
     return 0;
   });
 
+  const totalPages = Math.max(1, Math.ceil(sortedProducts.length / pageSize));
+  const paginatedProducts = sortedProducts.slice((page - 1) * pageSize, page * pageSize);
+
   return (
     <div className="min-h-screen flex flex-col fe-bg-gradient">
       <Header />
@@ -85,6 +95,7 @@ export default function ShopPage() {
                     setPower("all");
                     setWaterResistance("all");
                     setSearchQuery("");
+                    setSortBy("featured");
                   }}
                   className="text-xs text-primary hover:underline font-medium"
                 >
@@ -243,7 +254,7 @@ export default function ShopPage() {
             {/* Grid */}
             {sortedProducts.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-                {sortedProducts.map((product) => (
+                {paginatedProducts.map((product) => (
                   <ProductCard key={product.id} product={product} />
                 ))}
               </div>
@@ -254,6 +265,8 @@ export default function ShopPage() {
                 <p className="text-xs text-on-surface-variant">Thử bỏ các tiêu chí lọc để xem thêm thiết bị khác.</p>
               </div>
             )}
+
+            <Pagination page={page} totalPages={totalPages} onChange={setPage} />
           </div>
         </div>
       </main>

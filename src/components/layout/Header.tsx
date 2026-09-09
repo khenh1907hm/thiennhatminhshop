@@ -35,7 +35,6 @@ const navMenuItems = [
   { name: "Danh mục sản phẩm", icon: "grid_view", href: "/", isCategoryMenu: true },
   { name: "Các thương hiệu", icon: "verified", href: "/?tab=brands", isCategoryMenu: false },
   { name: "Yêu cầu báo giá", icon: "request_quote", href: "/contact", isCategoryMenu: false },
-  { name: "Tracking Order", icon: "local_shipping", href: "/?tab=tracking", isCategoryMenu: false },
   { name: "Tài liệu kỹ thuật", icon: "description", href: "/docs", isCategoryMenu: false },
   { name: "Tin tức", icon: "newspaper", href: "/?tab=news", isCategoryMenu: false },
 ];

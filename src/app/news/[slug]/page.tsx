@@ -184,12 +184,12 @@ export default async function NewsDetailPage({
 
             <article className="bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-8 lg:p-10 shadow-sm border border-outline-variant">
               {post.coverImage && (
-                <div className="aspect-[16/9] w-full rounded-xl sm:rounded-2xl overflow-hidden mb-8">
+                <div className="w-full rounded-xl sm:rounded-2xl overflow-hidden mb-8 bg-surface-container-low">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={post.coverImage}
                     alt={post.title}
-                    className="w-full h-full object-cover"
+                    className="block w-full h-auto object-contain"
                   />
                 </div>
               )}

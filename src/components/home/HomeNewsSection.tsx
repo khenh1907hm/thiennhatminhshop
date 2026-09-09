@@ -36,9 +36,9 @@ export default function HomeNewsSection() {
 
   return (
     <section className="w-[85%] mx-auto py-4 md:py-6 ">
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6">
-        <div className="text-center sm:text-left w-full sm:w-auto">
-          <div className="heading-dual-center sm:justify-start">
+      <div className="relative flex flex-col items-center gap-4 mb-6">
+        <div className="text-center w-full">
+          <div className="heading-dual-center justify-center">
             <h2
               className="heading-dual text-3xl sm:text-4xl md:text-[2.75rem] font-bold text-slate-900 font-headline tracking-tight"
               data-en="News"
@@ -52,7 +52,7 @@ export default function HomeNewsSection() {
         </div>
         <Link
           href="/?tab=news"
-          className="inline-flex items-center gap-1.5 text-sm font-bold text-primary hover:underline shrink-0 self-center sm:self-auto"
+          className="inline-flex items-center gap-1.5 text-sm font-bold text-primary hover:underline sm:absolute sm:right-0 sm:bottom-0"
         >
           Xem tất cả
           <span className="material-symbols-outlined text-[18px]">arrow_forward</span>

@@ -4,7 +4,7 @@ import Link from "next/link";
 export default function Footer() {
   return (
     <footer className="bg-gradient-to-br from-[#123b67] via-[#15558a] to-[#087f9b] text-white w-full py-12 px-8 mt-auto border-t border-cyan-200/20">
-      <div className="max-w-screen-2xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
+      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-[1.6fr_1fr_1fr] gap-x-16 gap-y-10 items-start">
         <div className="flex flex-col gap-4">
           <h4 className="text-white font-bold uppercase tracking-widest text-sm font-headline">
             THÔNG TIN LIÊN HỆ
@@ -34,11 +34,6 @@ export default function Footer() {
               className="h-auto w-44"
             />
           </a>
-          <div className="flex gap-4 text-white">
-            <span className="material-symbols-outlined cursor-pointer hover:text-cyan-200 transition-colors">social_leaderboard</span>
-            <span className="material-symbols-outlined cursor-pointer hover:text-cyan-200 transition-colors">share</span>
-            <span className="material-symbols-outlined cursor-pointer hover:text-cyan-200 transition-colors">mail</span>
-          </div>
         </div>
 
         <div className="flex flex-col gap-4">
@@ -61,21 +56,6 @@ export default function Footer() {
           </nav>
         </div>
 
-        <div className="flex flex-col gap-4">
-          <h4 className="text-white font-bold uppercase tracking-widest text-sm font-headline">LIÊN HỆ</h4>
-          <p className="text-blue-100 text-sm flex items-start gap-2">
-            <span className="material-symbols-outlined text-cyan-200 text-sm mt-1">location_on</span>
-            75 Nguyễn Cửu Đàm, Phường Tân Sơn Nhì, TP. Hồ Chí Minh
-          </p>
-          <p className="text-blue-100 text-sm flex items-center gap-2">
-            <span className="material-symbols-outlined text-cyan-200 text-sm">call</span>
-            Hotline: +84 983 449 446
-          </p>
-          <p className="text-blue-100 text-sm flex items-center gap-2">
-            <span className="material-symbols-outlined text-cyan-200 text-sm">mail</span>
-            Email: ng.luan@thienhatminh.com
-          </p>
-        </div>
       </div>
 
       <div className="max-w-screen-2xl mx-auto border-t border-white/15 mt-12 pt-8 text-center text-blue-100/70 text-xs">

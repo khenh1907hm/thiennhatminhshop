@@ -124,8 +124,8 @@ export default function QuoteRequestSection({
       onSubmit={handleSubmit}
       className={`rounded-[1.75rem] p-5 sm:p-6 space-y-4 ${
         variant === "formOnly"
-          ? "bg-white border border-outline-variant shadow-sm"
-          : "bg-white/70 backdrop-blur-2xl border border-white/70 shadow-[0_20px_50px_-20px_rgba(15,23,42,0.35)]"
+          ? "bg-[#bfdbfe94] border border-outline-variant shadow-sm"
+          : "bg-[#bfdbfe94] backdrop-blur-2xl border border-white/70 shadow-[0_20px_50px_-20px_rgba(15,23,42,0.35)]"
       }`}
     >
       <div className="space-y-1 mb-1">
@@ -326,7 +326,7 @@ export default function QuoteRequestSection({
             shadow-[0_24px_60px_-24px_rgba(37,99,235,0.45)]
             bg-gradient-to-br from-[#eff6ff] via-[#dbeafe] to-[#bfdbfe]"
           >
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.8),transparent_42%),radial-gradient(circle_at_bottom_left,rgba(96,165,250,0.18),transparent_45%)]" />
+            <div className="pointer-events-none absolute inset-0 bg-[#ffffff]" />
             <div className="relative grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 p-6 sm:p-8 lg:p-10 items-center">
               <div className="lg:col-span-6 xl:col-span-7 text-on-surface space-y-5 max-w-xl text-center lg:text-left mx-auto lg:mx-0 flex flex-col items-center lg:items-start">
                 {/* eslint-disable-next-line @next/next/no-img-element */}

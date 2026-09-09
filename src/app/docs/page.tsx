@@ -196,7 +196,7 @@ export default function DocsPage() {
                 cho dự án của bạn.
               </p>
               <a
-                href="/contact"
+                href="https://www.thiennhatminh.com/lien-he"
                 className="mt-3 block w-full py-2 bg-white text-blue-900 hover:bg-blue-50 font-bold rounded-xl text-xs uppercase tracking-widest transition-all duration-300 shadow-md active:scale-95 text-center"
               >
                 LIÊN HỆ NGAY
