@@ -378,8 +378,8 @@ function HeaderContent() {
 
       {/* ===== BOTTOM NAV BAR ===== */}
       <div className="bg-gradient-to-b from-slate-50 to-slate-100 border-b border-slate-200 shadow-sm relative z-40">
-        <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-10">
-          <nav className="flex items-center justify-between overflow-visible">
+        <div className="max-w-screen-2xl mx-auto px-0 sm:px-6 lg:px-10 overflow-x-auto md:overflow-visible scrollbar-hide">
+          <nav className="flex min-w-max items-center justify-start md:min-w-0 md:justify-between overflow-visible">
             {navMenuItems.map((item, idx) => {
               if (item.isCategoryMenu) {
                 // "Danh mục sản phẩm" with hover dropdown
@@ -394,14 +394,14 @@ function HeaderContent() {
                     <button
                       type="button"
                       onClick={() => setCategoryMenuOpen((prev) => !prev)}
-                      className="flex items-center gap-2 px-3 lg:px-4 py-2.5 text-[12px] lg:text-[13px] font-semibold whitespace-nowrap transition-all duration-300 border-b-2 border-transparent hover:border-primary text-slate-700 hover:text-primary hover:bg-primary/5 shrink-0 cursor-pointer"
+                      className="flex items-center gap-1.5 px-2.5 sm:px-3 lg:px-4 py-2.5 text-[11px] sm:text-[12px] lg:text-[13px] font-semibold whitespace-nowrap transition-all duration-300 border-b-2 border-transparent hover:border-primary text-slate-700 hover:text-primary hover:bg-primary/5 shrink-0 cursor-pointer"
                     >
-                      <span className="material-symbols-outlined text-[18px] text-primary">
+                      <span className="material-symbols-outlined text-[16px] sm:text-[18px] text-primary">
                         {item.icon || "grid_view"}
                       </span>
                       {item.name}
                       <span
-                        className={`material-symbols-outlined text-[14px] text-slate-400 transition-transform duration-200 ${categoryMenuOpen ? "rotate-180 text-primary" : ""
+                        className={`material-symbols-outlined text-[13px] sm:text-[14px] text-slate-400 transition-transform duration-200 ${categoryMenuOpen ? "rotate-180 text-primary" : ""
                           }`}
                       >
                         keyboard_arrow_down
@@ -485,9 +485,9 @@ function HeaderContent() {
                 <Link
                   key={idx}
                   href={item.href}
-                  className="flex items-center gap-1.5 px-3 lg:px-4 py-2.5 text-[12px] lg:text-[13px] font-semibold whitespace-nowrap transition-all duration-300 border-b-2 border-transparent hover:border-primary text-slate-600 hover:text-primary hover:bg-primary/5 shrink-0"
+                  className="flex items-center gap-1 px-2.5 sm:px-3 lg:px-4 py-2.5 text-[11px] sm:text-[12px] lg:text-[13px] font-semibold whitespace-nowrap transition-all duration-300 border-b-2 border-transparent hover:border-primary text-slate-600 hover:text-primary hover:bg-primary/5 shrink-0"
                 >
-                  <span className="material-symbols-outlined text-[18px] text-primary">
+                  <span className="material-symbols-outlined text-[16px] sm:text-[18px] text-primary">
                     {item.icon}
                   </span>
                   {item.name}

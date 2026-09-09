@@ -322,27 +322,26 @@ export default function QuoteRequestSection({
         <section className="w-[85%] mx-auto pb-10 md:pb-14">
           <div
             className="relative overflow-hidden rounded-[2rem] md:rounded-[2.5rem]
-            border border-white/25
-            shadow-[0_30px_80px_-28px_rgba(29,78,216,0.55)]
-            bg-gradient-to-br from-[#1e3a8a]/90 via-[#1d4ed8]/85 to-[#0891b2]/80
-            backdrop-blur-xl"
+            border border-blue-200/70
+            shadow-[0_24px_60px_-24px_rgba(37,99,235,0.45)]
+            bg-gradient-to-br from-[#eff6ff] via-[#dbeafe] to-[#bfdbfe]"
           >
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(255,255,255,0.22),transparent_55%),radial-gradient(ellipse_at_bottom_right,rgba(34,211,238,0.25),transparent_50%)]" />
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.8),transparent_42%),radial-gradient(circle_at_bottom_left,rgba(96,165,250,0.18),transparent_45%)]" />
             <div className="relative grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 p-6 sm:p-8 lg:p-10 items-center">
-              <div className="lg:col-span-6 xl:col-span-7 text-white space-y-5 max-w-xl text-center lg:text-left mx-auto lg:mx-0 flex flex-col items-center lg:items-start">
+              <div className="lg:col-span-6 xl:col-span-7 text-on-surface space-y-5 max-w-xl text-center lg:text-left mx-auto lg:mx-0 flex flex-col items-center lg:items-start">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+                {/* <img
                   src="/images/logo.png"
                   alt="Logo Thiên Nhật Minh"
-                  className="h-12 sm:h-14 w-auto object-contain drop-shadow-md"
-                />
+                  className="h-12 sm:h-14 w-auto object-contain"
+                /> */}
                 <h2
-                  className="heading-dual heading-dual-on-dark text-3xl sm:text-4xl font-bold font-headline leading-tight tracking-tight"
+                  className="heading-dual text-3xl sm:text-4xl font-bold font-headline leading-tight tracking-tight"
                   data-en="Official Distributor"
                 >
                   <span className="drop-shadow-sm">Nhà phân phối chính hãng</span>
                 </h2>
-                <p className="text-sm sm:text-base text-blue-50/90 leading-relaxed">
+                <p className="text-sm sm:text-base text-on-surface-variant leading-relaxed">
                   Đơn vị cung cấp giải pháp thiết bị điện công nghiệp hàng đầu khu vực.
                   Phân phối chính hãng Schneider Electric, Siemens, Omron và nhiều thương
                   hiệu uy tín — tư vấn kỹ thuật và báo giá nhanh chóng.
@@ -350,9 +349,9 @@ export default function QuoteRequestSection({
                 <Link
                   href="/contact"
                   className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl
-                  bg-amber-400 text-slate-900 font-bold text-sm
-                  hover:bg-amber-300 active:scale-[0.98] transition-all
-                  shadow-lg shadow-amber-500/25"
+                  bg-primary text-on-primary font-bold text-sm
+                  hover:bg-primary/90 active:scale-[0.98] transition-all
+                  shadow-lg shadow-primary/20"
                 >
                   Tìm hiểu thêm
                   <span className="material-symbols-outlined text-[18px]">

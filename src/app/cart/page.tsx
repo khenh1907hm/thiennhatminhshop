@@ -453,13 +453,13 @@ export default function Cart() {
 
                 {/* Right Column: Order Summary Card */}
                 <div className="lg:col-span-5">
-                  <div className="bg-slate-800 text-slate-100 rounded-2xl p-6 sm:p-7 sticky top-24 border border-slate-700/80 shadow-lg space-y-5">
-                    <h2 className="text-lg font-semibold tracking-tight font-headline border-b border-slate-600/60 pb-3 text-white">
+                  <div className="bg-surface rounded-2xl p-6 sm:p-7 sticky top-24 border border-primary/15 shadow-lg shadow-primary/10 space-y-5">
+                    <h2 className="text-lg font-semibold tracking-tight font-headline border-b border-outline-variant pb-3 text-on-surface">
                       Tổng đơn hàng
                     </h2>
 
                     <div className="space-y-2">
-                      <label className="block text-xs font-medium text-slate-400 uppercase tracking-wide">
+                      <label className="block text-xs font-medium text-outline uppercase tracking-wide">
                         Mã khuyến mãi
                       </label>
                       <div className="flex gap-2">
@@ -472,19 +472,19 @@ export default function Cart() {
                             setPromoMsg(null);
                           }}
                           placeholder="Nhập mã..."
-                          className="flex-1 min-w-0 px-3 py-2.5 rounded-lg bg-slate-900/60 border border-slate-600 text-sm text-white placeholder:text-slate-500 outline-none focus:border-slate-400 font-mono uppercase"
+                          className="flex-1 min-w-0 px-3 py-2.5 rounded-lg bg-surface-container-low border border-outline-variant text-sm text-on-surface placeholder:text-outline outline-none focus:border-primary font-mono uppercase"
                         />
                         <button
                           type="button"
                           onClick={applyPromoCode}
                           disabled={validatingPromo || !promoCode.trim()}
-                          className="px-3.5 py-2.5 rounded-lg bg-slate-100 text-slate-900 text-xs font-semibold hover:bg-white disabled:opacity-50 shrink-0"
+                          className="px-3.5 py-2.5 rounded-lg bg-primary text-on-primary text-xs font-semibold hover:bg-primary/90 disabled:opacity-50 shrink-0"
                         >
                           {validatingPromo ? "..." : "Áp dụng"}
                         </button>
                       </div>
                       {promoMsg && (
-                        <p className={`text-xs ${appliedPromo ? "text-emerald-400" : "text-rose-300"}`}>
+                        <p className={`text-xs ${appliedPromo ? "text-emerald-600" : "text-red-600"}`}>
                           {promoMsg}
                         </p>
                       )}
@@ -496,17 +496,17 @@ export default function Cart() {
                             setPromoCode("");
                             setPromoMsg(null);
                           }}
-                          className="text-[11px] text-slate-400 underline hover:text-slate-200"
+                          className="text-[11px] text-outline underline hover:text-primary"
                         >
                           Bỏ mã khuyến mãi
                         </button>
                       )}
                     </div>
 
-                    <div className="space-y-2.5 text-sm border-b border-slate-600/60 pb-5 text-slate-300">
+                    <div className="space-y-2.5 text-sm border-b border-outline-variant pb-5 text-on-surface-variant">
                       <div className="flex justify-between">
                         <span>Tạm tính ({items.length} món):</span>
-                        <span className="font-medium text-white">{formatCurrency(subtotal)}</span>
+                        <span className="font-medium text-on-surface">{formatCurrency(subtotal)}</span>
                       </div>
                       {discountAmount > 0 && (
                         <div className="flex justify-between text-emerald-400">
@@ -516,19 +516,19 @@ export default function Cart() {
                       )}
                       <div className="flex justify-between">
                         <span>Thuế VAT (10%):</span>
-                        <span className="font-medium text-white">{formatCurrency(vat)}</span>
+                        <span className="font-medium text-on-surface">{formatCurrency(vat)}</span>
                       </div>
                       <div className="flex justify-between">
                         <span>Phí tư vấn kỹ thuật:</span>
-                        <span className="text-slate-200 font-medium">Miễn phí</span>
+                        <span className="text-primary font-medium">Miễn phí</span>
                       </div>
                     </div>
 
                     <div className="flex justify-between items-end">
-                      <span className="text-xs uppercase tracking-wider text-slate-400 font-headline">
+                      <span className="text-xs uppercase tracking-wider text-outline font-headline">
                         Tổng cộng
                       </span>
-                      <span className="text-2xl font-bold text-white font-headline">
+                      <span className="text-2xl font-bold text-primary font-headline">
                         {formatCurrency(total)}
                       </span>
                     </div>
@@ -536,7 +536,7 @@ export default function Cart() {
                     {checkoutStep === "cart" ? (
                       <button
                         onClick={() => setCheckoutStep("checkout")}
-                        className="w-full py-3.5 bg-slate-100 hover:bg-white text-slate-900 font-semibold rounded-xl text-sm transition-all border border-slate-300 flex items-center justify-center gap-2"
+                        className="w-full py-3.5 bg-primary hover:bg-primary/90 text-on-primary font-semibold rounded-xl text-sm transition-all shadow-md shadow-primary/20 flex items-center justify-center gap-2"
                       >
                         Tiến hành điền thông tin giao hàng
                         <span className="material-symbols-outlined text-lg">arrow_forward</span>
@@ -546,7 +546,7 @@ export default function Cart() {
                         type="button"
                         onClick={handlePlaceOrder}
                         disabled={isProcessingPayment}
-                        className="w-full py-3.5 bg-slate-100 hover:bg-white text-slate-900 font-semibold rounded-xl text-sm transition-all border border-slate-300 flex items-center justify-center gap-2 disabled:opacity-70"
+                        className="w-full py-3.5 bg-primary hover:bg-primary/90 text-on-primary font-semibold rounded-xl text-sm transition-all shadow-md shadow-primary/20 flex items-center justify-center gap-2 disabled:opacity-70"
                       >
                         {isProcessingPayment ? (
                           <span>Đang xử lý đơn hàng...</span>

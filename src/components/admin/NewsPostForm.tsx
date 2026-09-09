@@ -47,6 +47,8 @@ type NewsPostFormProps = {
   onDelete?: () => Promise<void>;
 };
 
+const EMPTY_TAG_IDS: string[] = [];
+
 function toDatetimeLocal(value?: string | null) {
   if (!value) return "";
   const d = new Date(value);
@@ -58,7 +60,7 @@ function toDatetimeLocal(value?: string | null) {
 export default function NewsPostForm({
   mode,
   initialValues,
-  initialTagIds = [],
+  initialTagIds = EMPTY_TAG_IDS,
   submitLabel,
   onSubmit,
   onDelete,

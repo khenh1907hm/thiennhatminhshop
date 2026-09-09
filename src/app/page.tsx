@@ -10,6 +10,7 @@ import QuoteRequestSection from "@/components/home/QuoteRequestSection";
 import HomeNewsSection from "@/components/home/HomeNewsSection";
 import CustomersSection from "@/components/home/CustomersSection";
 import BrandsTabSection from "@/components/home/BrandsTabSection";
+import FaqSection from "@/components/home/FaqSection";
 import BackToTopButton from "@/components/ui/BackToTopButton";
 import Pagination from "@/components/ui/Pagination";
 import { useNotification } from "@/context/NotificationContext";
@@ -324,6 +325,7 @@ function HomeContent() {
 
       <HomeNewsSection />
       <CustomersSection />
+      <FaqSection />
       <QuoteRequestSection />
       <Footer />
       <BackToTopButton />
