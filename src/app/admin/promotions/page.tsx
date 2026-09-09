@@ -62,14 +62,15 @@ export default function AdminPromotionsPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
+  const [page, setPage] = useState(1); const [totalPages, setTotalPages] = useState(1);
 
   const load = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/admin/promotions");
+      const res = await fetch(`/api/admin/promotions?page=${page}&limit=20`);
       if (!res.ok) throw new Error("Failed to fetch");
       const data = await res.json();
-      setPromotions(Array.isArray(data) ? data : []);
+      setPromotions(data.items || []); setTotalPages(data.totalPages || 1);
     } catch (err) {
       console.error(err);
       showNotification("Lỗi tải khuyến mãi", "error");
@@ -80,7 +81,7 @@ export default function AdminPromotionsPage() {
 
   useEffect(() => {
     load();
-  }, []);
+  }, [page]);
 
   const openCreate = () => {
     setEditingId(null);
@@ -290,6 +291,7 @@ export default function AdminPromotionsPage() {
           </table>
         </div>
       </div>
+      <Pager page={page} totalPages={totalPages} onChange={setPage}/>
 
       {modalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -448,3 +450,4 @@ export default function AdminPromotionsPage() {
     </div>
   );
 }
+function Pager({ page, totalPages, onChange }: { page: number; totalPages: number; onChange: (page: number) => void }) { return <div className="flex justify-end gap-3 text-sm"><span>Trang {page}/{totalPages}</span><button disabled={page === 1} onClick={() => onChange(page - 1)} className="rounded border px-3 py-1 disabled:opacity-40">Trước</button><button disabled={page === totalPages} onClick={() => onChange(page + 1)} className="rounded border px-3 py-1 disabled:opacity-40">Sau</button></div>; }

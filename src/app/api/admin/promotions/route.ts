@@ -1,12 +1,13 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const promotions = await prisma.promotion.findMany({
+    const { searchParams } = new URL(request.url); const page = Math.max(1, Number(searchParams.get('page')) || 1); const limit = Math.min(50, Math.max(1, Number(searchParams.get('limit')) || 20)); const skip = (page - 1) * limit;
+    const [items, total] = await Promise.all([prisma.promotion.findMany({
       orderBy: { createdAt: 'desc' }
-    });
-    return NextResponse.json(promotions);
+    , skip, take: limit }), prisma.promotion.count()]);
+    return NextResponse.json({ items, total, page, limit, totalPages: Math.max(1, Math.ceil(total / limit)) });
   } catch (error) {
     console.error('Error fetching promotions:', error);
     return NextResponse.json({ error: 'Failed to fetch promotions' }, { status: 500 });

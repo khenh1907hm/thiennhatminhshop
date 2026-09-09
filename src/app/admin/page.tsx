@@ -1,146 +1,37 @@
 "use client";
 
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
-const stats = [
-  { name: "Tổng doanh thu", value: "124,500,000 đ", trend: "+14.5%", isPositive: true, icon: "payments" },
-  { name: "Đơn hàng mới", value: "354", trend: "+5.2%", isPositive: true, icon: "shopping_bag" },
-  { name: "Khách hàng", value: "1,240", trend: "-2.1%", isPositive: false, icon: "group" },
-  { name: "Lượt truy cập", value: "45,200", trend: "+24.5%", isPositive: true, icon: "visibility" },
-];
+type DashboardData = {
+  monthlyRevenue: number; newOrders: number; customerCount: number;
+  chart: Array<{ name: string; revenue: number }>;
+  lowStockProducts: Array<{ id: string; name: string; sku: string; stock: number; stockAlertThreshold: number }>;
+  recentOrders: Array<{ id: string; orderNumber: string; customerName: string; totalAmount: string | number; status: string; createdAt: string }>;
+};
 
-const revenueData = [
-  { name: "T2", revenue: 40000000 },
-  { name: "T3", revenue: 30000000 },
-  { name: "T4", revenue: 50000000 },
-  { name: "T5", revenue: 27000000 },
-  { name: "T6", revenue: 18000000 },
-  { name: "T7", revenue: 23000000 },
-  { name: "CN", revenue: 34000000 },
-];
-
-const recentOrders = [
-  { id: "#ORD-001", customer: "Nguyễn Văn A", date: "Hôm nay, 10:24", amount: "1,250,000 đ", status: "Hoàn thành" },
-  { id: "#ORD-002", customer: "Trần Thị B", date: "Hôm nay, 09:12", amount: "850,000 đ", status: "Đang xử lý" },
-  { id: "#ORD-003", customer: "Lê Văn C", date: "Hôm qua, 15:45", amount: "2,100,000 đ", status: "Đang giao" },
-  { id: "#ORD-004", customer: "Phạm Thị D", date: "Hôm qua, 11:30", amount: "450,000 đ", status: "Hoàn thành" },
-];
+const currency = (value: number | string) => `${Number(value).toLocaleString("vi-VN")} đ`;
 
 export default function AdminDashboard() {
-  return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-on-surface font-headline">Tổng quan hệ thống</h1>
-          <p className="text-sm text-on-surface-variant mt-1">
-            Chào mừng trở lại! Dưới đây là thông tin chi tiết hôm nay.
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <button className="flex items-center gap-2 px-4 py-2 bg-surface border border-outline-variant rounded-xl text-sm font-medium text-on-surface hover:bg-surface-container-low transition-colors shadow-sm">
-            <span className="material-symbols-outlined text-[20px]">calendar_today</span>
-            30 ngày qua
-          </button>
-          <button className="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors shadow-sm shadow-primary/20">
-            <span className="material-symbols-outlined text-[20px]">download</span>
-            Xuất báo cáo
-          </button>
-        </div>
-      </div>
+  const [data, setData] = useState<DashboardData | null>(null);
+  const [error, setError] = useState("");
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat) => (
-          <div
-            key={stat.name}
-            className="bg-surface rounded-2xl p-6 border border-outline-variant shadow-sm relative overflow-hidden group hover:shadow-md transition-shadow"
-          >
-            <div className="absolute -right-4 -top-4 w-24 h-24 bg-primary/5 rounded-full group-hover:scale-110 transition-transform duration-500"></div>
-            <div className="flex items-center justify-between">
-              <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
-                <span className="material-symbols-outlined">{stat.icon}</span>
-              </div>
-              <div className={`flex items-center gap-1 text-sm font-medium px-2.5 py-1 rounded-full ${
-                stat.isPositive ? "text-emerald-700 bg-emerald-100" : "text-rose-700 bg-rose-100"
-              }`}>
-                <span className="material-symbols-outlined text-[16px]">
-                  {stat.isPositive ? "trending_up" : "trending_down"}
-                </span>
-                {stat.trend}
-              </div>
-            </div>
-            <div className="mt-4">
-              <p className="text-sm font-medium text-on-surface-variant">{stat.name}</p>
-              <p className="text-2xl font-bold text-on-surface mt-1 font-headline">{stat.value}</p>
-            </div>
-          </div>
-        ))}
-      </div>
+  useEffect(() => { fetch("/api/admin/dashboard").then(async (res) => { const body = await res.json(); if (!res.ok) throw new Error(body.error); setData(body); }).catch((err) => setError(err.message || "Không thể tải Dashboard")); }, []);
+  if (error) return <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-rose-700">{error}</div>;
+  if (!data) return <div className="py-16 text-center text-on-surface-variant">Đang tải Dashboard...</div>;
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main Chart Area */}
-        <div className="lg:col-span-2 bg-surface rounded-2xl border border-outline-variant shadow-sm p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg font-semibold text-on-surface font-headline">Biểu đồ doanh thu</h2>
-            <button className="p-2 hover:bg-surface-container-low rounded-lg transition-colors">
-              <span className="material-symbols-outlined text-outline">more_vert</span>
-            </button>
-          </div>
-          <div className="h-72 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={revenueData}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} dy={10} />
-                <YAxis 
-                  axisLine={false} 
-                  tickLine={false} 
-                  tick={{ fontSize: 12, fill: '#64748b' }} 
-                  tickFormatter={(value) => `${(value / 1000000)}M`}
-                  dx={-10}
-                />
-                <Tooltip 
-                  formatter={(value: any) => [`${Number(value).toLocaleString()} đ`, "Doanh thu"]}
-                  contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                />
-                <Line type="monotone" dataKey="revenue" stroke="#0ea5e9" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6, strokeWidth: 0 }} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
+  const cards = [
+    ["Doanh thu tháng", currency(data.monthlyRevenue), "payments", "text-emerald-600 bg-emerald-100"],
+    ["Đơn hàng mới", data.newOrders, "shopping_bag", "text-blue-600 bg-blue-100"],
+    ["Khách hàng", data.customerCount, "group", "text-violet-600 bg-violet-100"],
+    ["Sản phẩm sắp hết", data.lowStockProducts.length, "warning", "text-rose-600 bg-rose-100"],
+  ];
 
-        {/* Recent Orders List */}
-        <div className="bg-surface rounded-2xl border border-outline-variant shadow-sm p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg font-semibold text-on-surface font-headline">Đơn hàng gần đây</h2>
-            <button className="text-sm font-medium text-primary hover:underline">Xem tất cả</button>
-          </div>
-          <div className="space-y-4">
-            {recentOrders.map((order) => (
-              <div key={order.id} className="flex items-center justify-between p-3 rounded-xl hover:bg-surface-container-low transition-colors group cursor-pointer border border-transparent hover:border-outline-variant">
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center text-on-surface-variant font-medium">
-                    {order.customer.charAt(0)}
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-on-surface group-hover:text-primary transition-colors">{order.customer}</p>
-                    <p className="text-xs text-on-surface-variant">{order.date}</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm font-bold text-on-surface">{order.amount}</p>
-                  <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium mt-1 ${
-                    order.status === "Hoàn thành" ? "bg-emerald-100 text-emerald-800" :
-                    order.status === "Đang xử lý" ? "bg-amber-100 text-amber-800" :
-                    "bg-blue-100 text-blue-800"
-                  }`}>
-                    {order.status}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+  return <div className="space-y-6">
+    <div><h1 className="text-2xl font-bold text-on-surface font-headline">Dashboard</h1><p className="mt-1 text-sm text-on-surface-variant">Tổng quan vận hành cửa hàng theo dữ liệu hiện tại.</p></div>
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">{cards.map(([label, value, icon, color]) => <div key={String(label)} className="rounded-2xl border border-outline-variant bg-surface p-5 shadow-sm"><div className={`inline-flex rounded-xl p-3 ${color}`}><span className="material-symbols-outlined">{icon}</span></div><p className="mt-4 text-sm text-on-surface-variant">{label}</p><p className="mt-1 text-2xl font-bold text-on-surface">{value}</p></div>)}</div>
+    <div className="grid grid-cols-1 gap-6 xl:grid-cols-3"><section className="xl:col-span-2 rounded-2xl border border-outline-variant bg-surface p-6 shadow-sm"><h2 className="font-semibold text-on-surface">Biểu đồ doanh thu 6 tháng</h2><div className="mt-5 h-72"><ResponsiveContainer width="100%" height="100%"><LineChart data={data.chart}><CartesianGrid vertical={false} stroke="#e2e8f0" strokeDasharray="3 3"/><XAxis dataKey="name"/><YAxis tickFormatter={(value) => `${value / 1000000}M`}/><Tooltip formatter={(value) => currency(Number(value))}/><Line type="monotone" dataKey="revenue" stroke="#0ea5e9" strokeWidth={3}/></LineChart></ResponsiveContainer></div></section><section className="rounded-2xl border border-outline-variant bg-surface shadow-sm overflow-hidden"><div className="flex items-center justify-between border-b border-outline-variant px-5 py-4"><h2 className="font-semibold text-on-surface">Đơn hàng mới</h2><Link href="/admin/orders" className="text-sm font-medium text-primary">Xem tất cả</Link></div><div className="divide-y divide-outline-variant">{data.recentOrders.length === 0 ? <p className="p-5 text-sm text-on-surface-variant">Chưa có đơn hàng.</p> : data.recentOrders.map((order) => <div key={order.id} className="p-4"><div className="flex justify-between gap-3"><div><p className="font-medium">{order.customerName}</p><p className="text-xs text-on-surface-variant">{order.orderNumber}</p></div><p className="font-semibold">{currency(order.totalAmount)}</p></div><p className="mt-1 text-xs text-on-surface-variant">{new Date(order.createdAt).toLocaleString("vi-VN")} · {order.status}</p></div>)}</div></section></div>
+    <section className="rounded-2xl border border-outline-variant bg-surface shadow-sm overflow-hidden"><div className="flex items-center justify-between border-b border-outline-variant px-6 py-4"><h2 className="font-semibold text-on-surface">Sản phẩm sắp hết hàng</h2><Link href="/admin/inventory" className="text-sm font-medium text-primary">Quản lý kho</Link></div><div className="divide-y divide-outline-variant">{data.lowStockProducts.length === 0 ? <p className="p-6 text-sm text-emerald-700">Tất cả sản phẩm đang đủ tồn kho.</p> : data.lowStockProducts.map((product) => <div key={product.id} className="flex items-center justify-between gap-4 px-6 py-4"><div><p className="font-medium">{product.name}</p><p className="text-xs text-on-surface-variant">{product.sku}</p></div><p className="text-sm font-semibold text-rose-600">Còn {product.stock} / ngưỡng {product.stockAlertThreshold}</p></div>)}</div></section>
+  </div>;
 }

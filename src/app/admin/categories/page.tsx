@@ -8,13 +8,14 @@ export default function AdminCategoriesPage() {
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const { showNotification } = useNotification();
+  const [page, setPage] = useState(1); const [totalPages, setTotalPages] = useState(1);
 
   const fetchCategories = async () => {
     try {
-      const res = await fetch('/api/admin/categories');
+      const res = await fetch(`/api/admin/categories?paged=true&page=${page}&limit=20`);
       if (!res.ok) throw new Error("Failed to fetch");
       const data = await res.json();
-      setCategories(data);
+      setCategories(data.items || []); setTotalPages(data.totalPages || 1);
     } catch (error) {
       console.error(error);
       showNotification("Lỗi khi tải danh mục", "error");
@@ -25,7 +26,7 @@ export default function AdminCategoriesPage() {
 
   useEffect(() => {
     fetchCategories();
-  }, []);
+  }, [page]);
 
   const handleDelete = async (id: string) => {
     if (!confirm("Bạn có chắc chắn muốn xóa danh mục này?")) return;
@@ -63,6 +64,7 @@ export default function AdminCategoriesPage() {
           Thêm mới
         </Link>
       </div>
+      <div className="flex justify-end gap-3 text-sm"><span>Trang {page}/{totalPages}</span><button disabled={page === 1} onClick={() => setPage(page - 1)} className="rounded border px-3 py-1 disabled:opacity-40">Trước</button><button disabled={page === totalPages} onClick={() => setPage(page + 1)} className="rounded border px-3 py-1 disabled:opacity-40">Sau</button></div>
 
       <div className="bg-surface rounded-2xl border border-outline-variant shadow-sm overflow-hidden">
         <table className="w-full text-left border-collapse">

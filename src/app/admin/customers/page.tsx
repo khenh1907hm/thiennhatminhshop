@@ -49,16 +49,16 @@ export default function AdminCustomersPage() {
     role: "USER",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const res = await fetch("/api/admin/users");
+      const res = await fetch(`/api/admin/users?page=${page}&limit=20`);
       if (!res.ok) throw new Error("Failed to fetch users");
       const data = await res.json();
-      if (Array.isArray(data)) {
-        setUsers(data);
-      }
+      setUsers(data.items || []); setTotalPages(data.totalPages || 1);
     } catch (error) {
       console.error(error);
       showNotification("Lỗi tải danh sách khách hàng từ database", "error");
@@ -69,7 +69,7 @@ export default function AdminCustomersPage() {
 
   useEffect(() => {
     fetchUsers();
-  }, []);
+  }, [page]);
 
   const handleRoleChange = async (userId: string, newRole: "USER" | "ADMIN") => {
     try {
@@ -435,6 +435,7 @@ export default function AdminCustomersPage() {
             </table>
           </div>
         )}
+        <div className="flex justify-end gap-3 border-t border-outline-variant p-4 text-sm"><span>Trang {page}/{totalPages}</span><button disabled={page === 1} onClick={() => setPage(page - 1)} className="rounded border px-3 py-1 disabled:opacity-40">Trước</button><button disabled={page === totalPages} onClick={() => setPage(page + 1)} className="rounded border px-3 py-1 disabled:opacity-40">Sau</button></div>
       </div>
 
       {/* MODAL: Thêm người dùng mới */}

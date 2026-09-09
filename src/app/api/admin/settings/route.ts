@@ -1,52 +1,24 @@
-import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
+import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import prisma from "@/lib/prisma";
+
+const defaults = { allowGuestCheckout: true, pricesIncludeTax: true, taxName: "VAT", taxRate: 10, storeName: "Thiên Nhật Minh Eco", hotline: "", orderEmail: "" };
+const keys = Object.keys(defaults);
+async function isAdmin() { const session = await getServerSession(authOptions); return (session?.user as { role?: string } | undefined)?.role === "ADMIN"; }
+function parse(rows: Array<{ key: string; value: string }>) { const output = { ...defaults } as Record<string, unknown>; rows.forEach((row) => { if (keys.includes(row.key)) try { output[row.key] = JSON.parse(row.value); } catch {} }); return output; }
 
 export async function GET() {
-  try {
-    const settings = await prisma.setting.findMany();
-    // Chuyển mảng thành dạng object { key: value }
-    const settingsObject = settings.reduce((acc: any, curr) => {
-      acc[curr.key] = curr.value;
-      return acc;
-    }, {});
-    
-    return NextResponse.json(settingsObject);
-  } catch (error) {
-    console.error('Error fetching settings:', error);
-    return NextResponse.json({ error: 'Failed to fetch settings' }, { status: 500 });
-  }
+  if (!(await isAdmin())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  try { return NextResponse.json(parse(await prisma.setting.findMany({ where: { key: { in: keys } } }))); } catch { return NextResponse.json({ error: "Không thể tải cài đặt" }, { status: 500 }); }
 }
-
-export async function POST(request: Request) {
+export async function PUT(request: Request) {
+  if (!(await isAdmin())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   try {
-    const body = await request.json();
-    
-    // Giả sử body là một mảng object: [{ key: 'shippingFee', value: '30000', description: 'Phí ship cơ bản' }, ...]
-    if (!Array.isArray(body)) {
-      return NextResponse.json({ error: 'Body must be an array of settings' }, { status: 400 });
-    }
-
-    // Upsert từng setting
-    const results = await Promise.all(
-      body.map((setting) => {
-        return prisma.setting.upsert({
-          where: { key: setting.key },
-          update: {
-            value: String(setting.value),
-            description: setting.description || undefined
-          },
-          create: {
-            key: setting.key,
-            value: String(setting.value),
-            description: setting.description || null
-          }
-        });
-      })
-    );
-
-    return NextResponse.json({ success: true, results });
-  } catch (error) {
-    console.error('Error updating settings:', error);
-    return NextResponse.json({ error: 'Failed to update settings' }, { status: 500 });
-  }
+    const next = { ...defaults, ...(await request.json()) } as typeof defaults;
+    next.taxRate = Number(next.taxRate);
+    if (!Number.isFinite(next.taxRate) || next.taxRate < 0 || next.taxRate > 100) return NextResponse.json({ error: "Thuế phải từ 0 đến 100%" }, { status: 400 });
+    await prisma.$transaction(keys.map((key) => prisma.setting.upsert({ where: { key }, update: { value: JSON.stringify(next[key as keyof typeof next]) }, create: { key, value: JSON.stringify(next[key as keyof typeof next]), description: "Cấu hình hệ thống" } })));
+    return NextResponse.json(next);
+  } catch { return NextResponse.json({ error: "Không thể lưu cài đặt" }, { status: 500 }); }
 }

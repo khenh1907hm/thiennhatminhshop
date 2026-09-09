@@ -3,9 +3,13 @@ import prisma from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const users = await prisma.user.findMany({
+    const { searchParams } = new URL(request.url);
+    const page = Math.max(1, Number(searchParams.get('page')) || 1);
+    const limit = Math.min(50, Math.max(1, Number(searchParams.get('limit')) || 20));
+    const skip = (page - 1) * limit;
+    const [items, total] = await Promise.all([prisma.user.findMany({
       orderBy: { createdAt: 'desc' },
       select: {
         id: true,
@@ -19,9 +23,9 @@ export async function GET() {
         _count: {
           select: { orders: true }
         }
-      }
-    });
-    return NextResponse.json(users);
+      }, skip, take: limit
+    }), prisma.user.count()]);
+    return NextResponse.json({ items, total, page, limit, totalPages: Math.max(1, Math.ceil(total / limit)) });
   } catch (error: any) {
     console.error('Error fetching users:', error);
     return NextResponse.json({ error: 'Failed to fetch users', detail: error?.message }, { status: 500 });

@@ -8,6 +8,12 @@ export async function POST(request: Request) {
     const session = await getServerSession(authOptions);
     const userId = await getUserIdFromSession(session);
 
+    const guestSetting = await prisma.setting.findUnique({ where: { key: 'allowGuestCheckout' } });
+    const allowGuestCheckout = guestSetting?.value ? JSON.parse(guestSetting.value) : true;
+    if (!userId && !allowGuestCheckout) {
+      return NextResponse.json({ error: 'Vui lòng đăng nhập để đặt hàng' }, { status: 401 });
+    }
+
     const body = await request.json();
     const { 
       customerName, 

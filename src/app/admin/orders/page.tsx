@@ -45,16 +45,16 @@ export default function AdminOrdersPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
   const fetchOrders = async () => {
     try {
       setLoading(true);
-      const res = await fetch("/api/admin/orders");
+      const res = await fetch(`/api/admin/orders?page=${page}&limit=20`);
       if (!res.ok) throw new Error("Failed to fetch orders");
       const data = await res.json();
-      if (Array.isArray(data)) {
-        setOrders(data);
-      }
+      setOrders(data.items || []); setTotalPages(data.totalPages || 1);
     } catch (error) {
       console.error(error);
       showNotification("Lỗi tải danh sách đơn hàng từ database", "error");
@@ -65,7 +65,7 @@ export default function AdminOrdersPage() {
 
   useEffect(() => {
     fetchOrders();
-  }, []);
+  }, [page]);
 
   const handleStatusChange = async (orderId: string, newStatus: string) => {
     try {
@@ -502,6 +502,7 @@ export default function AdminOrdersPage() {
             </table>
           </div>
         )}
+        <div className="flex justify-end gap-3 border-t border-outline-variant p-4 text-sm"><span>Trang {page}/{totalPages}</span><button disabled={page === 1} onClick={() => setPage(page - 1)} className="rounded border px-3 py-1 disabled:opacity-40">Trước</button><button disabled={page === totalPages} onClick={() => setPage(page + 1)} className="rounded border px-3 py-1 disabled:opacity-40">Sau</button></div>
       </div>
 
       {/* MODAL: Chi tiết Đơn hàng */}

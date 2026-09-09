@@ -19,6 +19,7 @@ export default function Cart() {
 
   // Guest vs Member state
   const [isGuest, setIsGuest] = useState(true);
+  const [checkoutSettings, setCheckoutSettings] = useState({ allowGuestCheckout: true, pricesIncludeTax: true, taxName: "VAT", taxRate: 10 });
 
   // Guest Customer Form Fields (Bắt buộc điền đầy đủ thông tin)
   const [customerInfo, setCustomerInfo] = useState({
@@ -39,6 +40,7 @@ export default function Cart() {
   const [validatingPromo, setValidatingPromo] = useState(false);
 
   useEffect(() => {
+    fetch('/api/settings/checkout').then((res) => res.json()).then((data) => setCheckoutSettings((current) => ({ ...current, ...data }))).catch(() => {});
     if (session?.user) {
       setIsGuest(false);
       setCustomerInfo(prev => ({
@@ -67,7 +69,7 @@ export default function Cart() {
   const priced = applyPromotion(subtotal, appliedPromo);
   const discountAmount = priced.originalPrice != null ? subtotal - priced.price : 0;
   const taxable = priced.price;
-  const vat = taxable * 0.1;
+  const vat = checkoutSettings.pricesIncludeTax ? 0 : taxable * (Number(checkoutSettings.taxRate) / 100);
   const total = taxable + vat;
 
   const formatCurrency = (val: number) => formatPrice(val);
@@ -110,6 +112,10 @@ export default function Cart() {
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (isGuest && !checkoutSettings.allowGuestCheckout) {
+      showNotification("Cửa hàng yêu cầu đăng nhập trước khi đặt hàng.", "error");
+      return;
+    }
     if (!customerInfo.fullName || !customerInfo.phone || !customerInfo.addressDetail) {
       showNotification("Vui lòng điền đầy đủ thông tin giao hàng bắt buộc!", "error");
       return;
@@ -515,7 +521,7 @@ export default function Cart() {
                         </div>
                       )}
                       <div className="flex justify-between">
-                        <span>Thuế VAT (10%):</span>
+                        <span>{checkoutSettings.taxName} ({checkoutSettings.pricesIncludeTax ? "đã gồm trong giá" : `${checkoutSettings.taxRate}%`}):</span>
                         <span className="font-medium text-on-surface">{formatCurrency(vat)}</span>
                       </div>
                       <div className="flex justify-between">

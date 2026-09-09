@@ -19,7 +19,7 @@ export default function WarrantyPolicyPage() {
               className="heading-dual text-3xl sm:text-4xl md:text-[2.75rem] font-bold text-slate-900 font-headline tracking-tight"
               data-en="Shopping Guide"
             >
-              <span>Hướng dẫn mua hàng</span>
+              <span>HƯỚNG DẪN MUA HÀNG</span>
             </h1>
           </div>
           <p className="text-sm text-on-surface-variant leading-relaxed">

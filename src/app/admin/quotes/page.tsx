@@ -45,15 +45,16 @@ export default function AdminQuotesPage() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("ALL");
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [page, setPage] = useState(1); const [totalPages, setTotalPages] = useState(1);
 
   const fetchQuotes = async () => {
     setLoading(true);
     try {
-      const params = filter !== "ALL" ? `?status=${filter}` : "";
+      const params = filter !== "ALL" ? `?status=${filter}&page=${page}&limit=20` : `?page=${page}&limit=20`;
       const res = await fetch(`/api/admin/quotes${params}`);
       if (!res.ok) throw new Error("Failed");
       const data = await res.json();
-      setQuotes(Array.isArray(data) ? data : []);
+      setQuotes(data.items || []); setTotalPages(data.totalPages || 1);
     } catch (e) {
       console.error(e);
       showNotification("Lỗi khi tải yêu cầu báo giá", "error");
@@ -64,7 +65,7 @@ export default function AdminQuotesPage() {
 
   useEffect(() => {
     fetchQuotes();
-  }, [filter]);
+  }, [filter, page]);
 
   const updateStatus = async (id: string, status: Quote["status"]) => {
     try {
@@ -244,6 +245,7 @@ export default function AdminQuotesPage() {
           </tbody>
         </table>
       </div>
+      <div className="flex justify-end gap-3 text-sm"><span>Trang {page}/{totalPages}</span><button disabled={page === 1} onClick={() => setPage(page - 1)} className="rounded border px-3 py-1 disabled:opacity-40">Trước</button><button disabled={page === totalPages} onClick={() => setPage(page + 1)} className="rounded border px-3 py-1 disabled:opacity-40">Sau</button></div>
     </div>
   );
 }

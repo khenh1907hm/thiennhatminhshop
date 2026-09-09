@@ -10,7 +10,7 @@ type NavItem =
   | { name: string; href: string; icon: string; children: NavChild[] };
 
 const navigation: NavItem[] = [
-  { name: "Tổng quan", href: "/admin", icon: "dashboard" },
+  { name: "Dashboard", href: "/admin", icon: "dashboard" },
   {
     name: "Sản phẩm",
     href: "/admin/products",

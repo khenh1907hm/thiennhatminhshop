@@ -3,10 +3,12 @@ import prisma from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const params = new URL(request.url).searchParams; const paged = params.get('paged') === 'true'; const page = Math.max(1, Number(params.get('page')) || 1); const limit = Math.min(50, Math.max(1, Number(params.get('limit')) || 20));
     const categories = await prisma.category.findMany({
       orderBy: { name: 'asc' },
+      ...(paged ? { skip: (page - 1) * limit, take: limit } : {}),
       include: {
         _count: {
           select: { products: true }
@@ -20,7 +22,8 @@ export async function GET() {
       ...c,
       parentName: c.parentId ? (map[c.parentId] ?? null) : null,
     }));
-    return NextResponse.json(enriched);
+    if (!paged) return NextResponse.json(enriched);
+    const total = await prisma.category.count(); return NextResponse.json({ items: enriched, total, page, limit, totalPages: Math.max(1, Math.ceil(total / limit)) });
   } catch (error) {
     console.error('Error fetching categories:', error);
     return NextResponse.json({ error: 'Failed to fetch categories' }, { status: 500 });
