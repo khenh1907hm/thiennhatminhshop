@@ -66,7 +66,7 @@ export default function ShopPage() {
     <div className="min-h-screen flex flex-col fe-bg-gradient">
       <Header />
 
-      <main className="w-[85%] mx-auto py-8 flex-grow">
+      <main className="w-[85%] max-w-[1440px] mx-auto py-8 flex-grow">
         {/* Banner */}
         <div className="bg-gradient-to-r from-blue-900 via-primary to-cyan-800 rounded-3xl p-8 sm:p-12 text-white shadow-lg mb-8 relative overflow-hidden">
           <div className="max-w-2xl relative z-10 space-y-2">
@@ -253,7 +253,7 @@ export default function ShopPage() {
 
             {/* Grid */}
             {sortedProducts.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
                 {paginatedProducts.map((product) => (
                   <ProductCard key={product.id} product={product} />
                 ))}

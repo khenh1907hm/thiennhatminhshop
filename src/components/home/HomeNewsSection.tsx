@@ -35,7 +35,7 @@ export default function HomeNewsSection() {
   };
 
   return (
-    <section className="w-[85%] mx-auto py-4 md:py-6 ">
+    <section className="w-[85%] max-w-[1440px] mx-auto py-4 md:py-6 ">
       <div className="relative flex flex-col items-center gap-4 mb-6">
         <div className="text-center w-full">
           <div className="heading-dual-center justify-center">
@@ -60,7 +60,7 @@ export default function HomeNewsSection() {
       </div>
 
       {loading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-5">
           {Array.from({ length: 4 }).map((_, i) => (
             <div
               key={i}
@@ -81,7 +81,7 @@ export default function HomeNewsSection() {
           <p className="text-sm font-semibold text-on-surface">Chưa có bài viết nào</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-5">
           {posts.map((post) => (
             <Link
               key={post.id}

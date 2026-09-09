@@ -19,7 +19,7 @@ export default function BackToTopButton() {
       type="button"
       aria-label="Lên đầu trang"
       onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-      className="fixed bottom-24 right-6 z-[60] w-12 h-12 rounded-full
+      className="fixed bottom-[calc(4.25rem+env(safe-area-inset-bottom))] right-3 sm:bottom-24 sm:right-6 z-[60] w-11 h-11 sm:w-12 sm:h-12 rounded-full
         bg-primary/90 text-white shadow-lg shadow-primary/30
         border border-white/30 backdrop-blur-md
         flex items-center justify-center

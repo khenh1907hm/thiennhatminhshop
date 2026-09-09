@@ -337,7 +337,7 @@ export default function QuoteRequestSection({
                 /> */}
                 <h2
                   className="heading-dual text-3xl sm:text-4xl font-bold font-headline leading-tight tracking-tight"
-                  data-en="Official Distributor"
+                  data-en=" Distributor"
                 >
                   <span className="drop-shadow-sm">Nhà phân phối chính hãng</span>
                 </h2>

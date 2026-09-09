@@ -45,11 +45,11 @@ export default function FaqSection() {
 
   return (
     <section className="w-[85%] max-w-4xl mx-auto py-10 md:py-14">
-      <div className="text-center max-w-3xl mx-auto space-y-3 mb-8">
-        <div className="heading-dual-center">
+      <div className="text-center w-full">
+        <div className="heading-dual-center justify-center">
           <h2
-            className="heading-dual text-3xl sm:text-4xl md:text-[2.75rem] font-bold text-slate-900 font-headline tracking-tight"
-            data-en="Frequently Asked Questions"
+            className="heading-outline text-3xl sm:text-4xl md:text-[2.75rem] font-bold text-slate-900 font-headline tracking-tight"
+            data-en="FAQs"
           >
             <span>CÂU HỎI THƯỜNG GẶP</span>
           </h2>

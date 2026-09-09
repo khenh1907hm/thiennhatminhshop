@@ -147,10 +147,10 @@ export default function NewsList({
                 href={`/news/${posts[0].slug}`}
                 className="group grid grid-cols-1 md:grid-cols-[1.1fr_1fr] bg-surface rounded-3xl overflow-hidden border border-outline-variant shadow-sm hover:shadow-xl transition-all duration-300"
               >
-                <div className="bg-surface-container-low relative overflow-hidden flex items-center justify-center">
+                <div className="h-56 sm:h-64 bg-surface-container-low relative overflow-hidden flex items-center justify-center">
                   {posts[0].coverImage ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={posts[0].coverImage} alt={posts[0].title} className="block w-full h-auto object-contain" />
+                    <img src={posts[0].coverImage} alt={posts[0].title} className="block w-full h-full object-contain" />
                   ) : (
                     <span className="text-sm text-outline">Chưa có ảnh</span>
                   )}
@@ -173,17 +173,17 @@ export default function NewsList({
               </Link>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
               {(page === 1 ? posts.slice(1) : posts).map((post) => (
                 <Link
                   href={`/news/${post.slug}`}
                   key={post.id}
                   className="group flex flex-col bg-surface rounded-3xl overflow-hidden border border-outline-variant shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
                 >
-                  <div className="bg-surface-container-low relative overflow-hidden flex items-center justify-center">
+                  <div className="h-44 sm:h-52 bg-surface-container-low relative overflow-hidden flex items-center justify-center">
                     {post.coverImage ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={post.coverImage} alt={post.title} className="block w-full h-auto object-contain" />
+                      <img src={post.coverImage} alt={post.title} className="block w-full h-full object-contain" />
                     ) : (
                       <span className="text-sm text-outline">Chưa có ảnh</span>
                     )}

@@ -15,19 +15,37 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { 
+    const {
       customerName, 
       customerPhone, 
       customerEmail, 
       shippingAddress, 
       note, 
       paymentMethod,
-      items, 
-      totalAmount 
+      items,
     } = body;
 
-    if (!items || items.length === 0) {
+    if (!Array.isArray(items) || items.length === 0) {
       return NextResponse.json({ error: 'Order must contain items' }, { status: 400 });
+    }
+
+    const normalizedItems = new Map<string, number>();
+    for (const item of items) {
+      if (typeof item?.productId !== 'string' || !item.productId) {
+        return NextResponse.json({ error: 'Invalid product item' }, { status: 400 });
+      }
+      if (!Number.isInteger(item.quantity) || item.quantity <= 0 || item.quantity > 1000) {
+        return NextResponse.json({ error: 'Số lượng sản phẩm không hợp lệ' }, { status: 400 });
+      }
+      normalizedItems.set(
+        item.productId,
+        (normalizedItems.get(item.productId) || 0) + item.quantity
+      );
+    }
+
+    const paymentMethods = new Set(['cod', 'qr']);
+    if (typeof paymentMethod !== 'string' || !paymentMethods.has(paymentMethod)) {
+      return NextResponse.json({ error: 'Phương thức thanh toán không hợp lệ' }, { status: 400 });
     }
 
     // Generate random order number ORD-XXXXXX
@@ -36,18 +54,24 @@ export async function POST(request: Request) {
     // Use transaction to ensure stock consistency
     const order = await prisma.$transaction(async (tx) => {
       // 1. Validate stock
-      for (const item of items) {
-        const product = await tx.product.findUnique({ where: { id: item.productId } });
+      const pricedItems: { productId: string; quantity: number; price: number }[] = [];
+      let calculatedTotal = 0;
+
+      for (const [productId, quantity] of normalizedItems) {
+        const product = await tx.product.findUnique({ where: { id: productId } });
         if (!product) {
-          throw new Error(`Product ${item.productId} not found`);
+          throw new Error(`Product ${productId} not found`);
         }
-        if (product.stock < item.quantity) {
+        if (product.stock < quantity) {
           throw new Error(`Insufficient stock for product ${product.name}`);
         }
+        const price = Number(product.price);
+        pricedItems.push({ productId, quantity, price });
+        calculatedTotal += price * quantity;
       }
 
       // 2. Deduct stock
-      for (const item of items) {
+      for (const item of pricedItems) {
         await tx.product.update({
           where: { id: item.productId },
           data: { stock: { decrement: item.quantity } }
@@ -65,9 +89,9 @@ export async function POST(request: Request) {
           shippingAddress,
           note,
           paymentMethod,
-          totalAmount,
+          totalAmount: calculatedTotal,
           orderItems: {
-            create: items.map((item: any) => ({
+            create: pricedItems.map((item) => ({
               productId: item.productId,
               quantity: item.quantity,
               price: item.price

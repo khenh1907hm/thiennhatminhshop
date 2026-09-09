@@ -17,7 +17,7 @@ export default function ContactPage() {
           <div className="flex justify-center py-2">
             <h1
               className="heading-dual text-3xl sm:text-4xl md:text-[2.75rem] font-bold text-slate-900 font-headline tracking-tight"
-              data-en="Contact & Solutions"
+              data-en="Contact"
             >
               <span>TƯ VẤN GIẢI PHÁP</span>
             </h1>

@@ -322,16 +322,16 @@
   content: attr(data-en);
   position: absolute;
   left: 50%;
-  top: 42%;
+  top: 50%;
   transform: translate(-50%, -50%);
   width: max-content;
   max-width: none;
-  font-size: clamp(2rem, 6vw, 3.75rem);
+  font-size: clamp(2.25rem, 7vw, 4.5rem);
   font-weight: 800;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: #0f172a;
-  opacity: 0.14;
+  color: transparent;
+  -webkit-text-stroke: 1.5px rgb(15 23 42 / 24%);
   white-space: nowrap;
   pointer-events: none;
   z-index: 0;
@@ -354,10 +354,46 @@
   width: 100%;
 }
 
+/* Chữ tiếng Anh dạng outline để tiêu đề chính nhẹ và thoáng hơn */
+.heading-outline {
+  position: relative;
+  display: inline-block;
+  padding: 0.85em 0.5em 0.35em;
+  text-align: center;
+}
+
+.heading-outline::before {
+  content: attr(data-en);
+  position: absolute;
+  left: 50%;
+  top: 22%;
+  transform: translate(-50%, -50%);
+  width: max-content;
+  font-size: clamp(2.25rem, 7vw, 4.5rem);
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: transparent;
+  -webkit-text-stroke: 1.5px rgb(15 23 42 / 24%);
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 0;
+  line-height: 1;
+  text-align: center;
+  font-family: var(--font-headline), ui-sans-serif, system-ui, sans-serif;
+}
+
+.heading-outline > span {
+  position: relative;
+  z-index: 1;
+  display: inline-block;
+  text-align: center;
+}
+
 /* EN mờ trên nền tối (banner) */
 .heading-dual-on-dark::before {
-  color: #ffffff;
-  opacity: 0.18;
+  color: transparent;
+  -webkit-text-stroke: 1.5px rgb(255 255 255 / 30%);
 }
 
 /* Logo marquee loop */

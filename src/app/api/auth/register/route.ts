@@ -23,7 +23,7 @@ export async function POST(request: Request) {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const user = await prisma.user.create({
+    await prisma.user.create({
       data: {
         name,
         email,
@@ -31,7 +31,7 @@ export async function POST(request: Request) {
       }
     });
 
-    return NextResponse.json(user);
+    return NextResponse.json({ success: true, message: "Đăng ký thành công" }, { status: 201 });
   } catch (error) {
     console.error("Lỗi đăng ký:", error);
     return new NextResponse("Lỗi máy chủ nội bộ", { status: 500 });

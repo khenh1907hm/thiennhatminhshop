@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { signIn } from "next-auth/react";
+import { getSession, signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Header from "@/components/layout/Header";
@@ -31,8 +31,19 @@ export default function LoginPage() {
       if (res?.error) {
         showNotification(res.error, "error");
       } else {
+        const session = await getSession();
+        let isAdmin = session?.user?.role === "ADMIN";
+
+        if (!isAdmin && session?.user?.email) {
+          const profileRes = await fetch("/api/user/profile");
+          if (profileRes.ok) {
+            const profile = await profileRes.json();
+            isAdmin = profile.role === "ADMIN";
+          }
+        }
+
         showNotification("Đăng nhập thành công!", "success");
-        router.push("/profile");
+        router.push(isAdmin ? "/admin" : "/profile");
         router.refresh();
       }
     } catch (error) {

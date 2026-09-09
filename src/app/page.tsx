@@ -14,6 +14,7 @@ import FaqSection from "@/components/home/FaqSection";
 import BackToTopButton from "@/components/ui/BackToTopButton";
 import Pagination from "@/components/ui/Pagination";
 import { useNotification } from "@/context/NotificationContext";
+import { SpeedInsights } from "@vercel/speed-insights/next"
 
 interface CategoryChild {
   id: string;
@@ -126,7 +127,7 @@ function HomeContent() {
     return (
       <div className="min-h-screen flex flex-col fe-bg-gradient">
         <Header />
-        <main className="w-[85%] mx-auto py-8 flex-grow">
+        <main className="w-[85%] max-w-[1440px] mx-auto py-8 flex-grow">
           <NewsList showBanner listBasePath="/news" pageSize={12} />
         </main>
         <Footer />
@@ -139,7 +140,7 @@ function HomeContent() {
     return (
       <div className="min-h-screen flex flex-col fe-bg-gradient">
         <Header />
-        <main className="w-[85%] mx-auto py-8 flex-grow">
+        <main className="w-[85%] max-w-[1440px] mx-auto py-8 flex-grow">
           <BrandsTabSection />
         </main>
         <Footer />
@@ -152,7 +153,7 @@ function HomeContent() {
     <div className="min-h-screen flex flex-col fe-bg-gradient">
       <Header />
 
-      <main className="w-[85%] mx-auto py-8 flex flex-col lg:flex-row gap-8 flex-grow">
+      <main className="w-[85%] max-w-[1440px] mx-auto py-8 flex flex-col lg:flex-row gap-8 flex-grow">
         <aside className="w-full lg:w-72 flex flex-col gap-2 shrink-0">
           <div className="bg-surface rounded-2xl shadow-sm border border-outline-variant relative z-20">
             <div className="px-6 py-4 border-b border-outline-variant bg-surface-container-low/50 rounded-t-2xl">
@@ -304,7 +305,7 @@ function HomeContent() {
             </div>
           ) : products.length > 0 ? (
             <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
                 {products.map((product) => (
                   <ProductCard key={product.id} product={product} />
                 ))}

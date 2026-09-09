@@ -52,6 +52,7 @@ function HeaderContent() {
   );
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [categoryMenuOpen, setCategoryMenuOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [categories, setCategories] = useState<CategoryWithChildren[]>([]);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const categoryMenuRef = useRef<HTMLDivElement>(null);
@@ -346,6 +347,18 @@ function HeaderContent() {
                   </div>
                 )}
               </div>
+
+              <button
+                type="button"
+                aria-label={mobileMenuOpen ? "Đóng menu" : "Mở menu"}
+                aria-expanded={mobileMenuOpen}
+                onClick={() => setMobileMenuOpen((prev) => !prev)}
+                className="sm:hidden flex items-center justify-center w-10 h-10 rounded-full bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all duration-300"
+              >
+                <span className="material-symbols-outlined text-[22px]">
+                  {mobileMenuOpen ? "close" : "menu"}
+                </span>
+              </button>
             </div>
           </div>
 
@@ -375,8 +388,29 @@ function HeaderContent() {
         </div>
       </div>
 
+      {/* ===== MOBILE MENU ===== */}
+      <div
+        className={`sm:hidden overflow-hidden border-b border-slate-200 bg-white shadow-lg transition-[max-height,opacity] duration-300 ease-out ${mobileMenuOpen ? "max-h-[30rem] opacity-100" : "max-h-0 opacity-0"}`}
+      >
+        <nav className="grid grid-cols-2 gap-2 p-3">
+          {navMenuItems.map((item, idx) => (
+            <Link
+              key={idx}
+              href={item.href}
+              onClick={() => setMobileMenuOpen(false)}
+              className="flex min-h-11 items-center gap-2 rounded-xl border border-slate-200 px-3 py-2.5 text-xs font-semibold text-slate-700 transition-colors hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
+            >
+              <span className="material-symbols-outlined text-[18px] text-primary">
+                {item.icon}
+              </span>
+              <span>{item.name}</span>
+            </Link>
+          ))}
+        </nav>
+      </div>
+
       {/* ===== BOTTOM NAV BAR ===== */}
-      <div className="bg-gradient-to-b from-slate-50 to-slate-100 border-b border-slate-200 shadow-sm relative z-40">
+      <div className="hidden sm:block bg-gradient-to-b from-slate-50 to-slate-100 border-b border-slate-200 shadow-sm relative z-40">
         <div className="max-w-screen-2xl mx-auto px-0 sm:px-6 lg:px-10 overflow-x-auto md:overflow-visible scrollbar-hide">
           <nav className="flex min-w-max items-center justify-start md:min-w-0 md:justify-between overflow-visible">
             {navMenuItems.map((item, idx) => {

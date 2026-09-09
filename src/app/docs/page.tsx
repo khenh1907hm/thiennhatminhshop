@@ -84,7 +84,7 @@ export default function DocsPage() {
           <div className="flex justify-center py-2">
             <h1
               className="heading-dual text-3xl sm:text-4xl md:text-[2.75rem] font-bold text-slate-900 font-headline tracking-tight"
-              data-en="Technical Documents"
+              data-en="Documents"
             >
               <span>TÀI LIỆU KỸ THUẬT</span>
             </h1>
