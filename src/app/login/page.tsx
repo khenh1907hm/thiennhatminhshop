@@ -43,10 +43,10 @@ export default function LoginPage() {
         }
 
         showNotification("Đăng nhập thành công!", "success");
-        router.push(isAdmin ? "/admin" : "/profile");
+        router.push(isAdmin ? "/admin" : "/account/");
         router.refresh();
       }
-    } catch (error) {
+    } catch {
       showNotification("Đã có lỗi xảy ra", "error");
     } finally {
       setLoading(false);
@@ -94,7 +94,18 @@ export default function LoginPage() {
             >
               {loading ? "Đang xử lý..." : "Đăng nhập"}
             </button>
+            <div className="text-right"><Link href="/forgot-password" className="text-xs font-semibold text-primary hover:underline">Quên mật khẩu?</Link></div>
           </form>
+
+          <div className="my-5 flex items-center gap-3 text-xs text-on-surface-variant"><span className="h-px flex-1 bg-outline-variant" />Hoặc<span className="h-px flex-1 bg-outline-variant" /></div>
+          <button
+            type="button"
+            onClick={() => signIn("google", { callbackUrl: "/account/" })}
+            className="flex w-full items-center justify-center gap-2 rounded-xl border border-outline-variant bg-surface px-4 py-3 text-sm font-semibold text-on-surface hover:bg-surface-container-low"
+          >
+            <span className="text-base font-bold">G</span>
+            Đăng nhập bằng Google
+          </button>
 
           <div className="mt-6 text-center text-sm text-on-surface-variant">
             Chưa có tài khoản?{" "}

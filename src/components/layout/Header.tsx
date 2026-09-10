@@ -297,7 +297,7 @@ function HeaderContent() {
                             </p>
                           </div>
                           <Link
-                            href="/profile"
+                            href="/account"
                             onClick={() => setUserMenuOpen(false)}
                             className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-primary/10 hover:text-primary rounded-lg transition-colors"
                           >
@@ -305,6 +305,16 @@ function HeaderContent() {
                               account_circle
                             </span>
                             Tài khoản của tôi
+                          </Link>
+                          <Link
+                            href="/account?tab=orders"
+                            onClick={() => setUserMenuOpen(false)}
+                            className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-primary/10 hover:text-primary rounded-lg transition-colors"
+                          >
+                            <span className="material-symbols-outlined text-lg">
+                              receipt_long
+                            </span>
+                            Đơn hàng
                           </Link>
                           <button
                             onClick={() => {

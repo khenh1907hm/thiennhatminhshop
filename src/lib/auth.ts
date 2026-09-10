@@ -1,5 +1,6 @@
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
+import GoogleProvider from "next-auth/providers/google";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
@@ -7,6 +8,9 @@ import bcrypt from "bcryptjs";
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma) as any,
   providers: [
+    ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
+      ? [GoogleProvider({ clientId: process.env.GOOGLE_CLIENT_ID, clientSecret: process.env.GOOGLE_CLIENT_SECRET })]
+      : []),
     CredentialsProvider({
       name: "credentials",
       credentials: {
@@ -26,6 +30,10 @@ export const authOptions: NextAuthOptions = {
 
         if (!user || !user?.password) {
           throw new Error("Sai email hoặc mật khẩu.");
+        }
+
+        if (!user.emailVerified) {
+          throw new Error("Vui lòng xác minh email trước khi đăng nhập.");
         }
 
         const isCorrectPassword = await bcrypt.compare(

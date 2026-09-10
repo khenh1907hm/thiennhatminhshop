@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import bcrypt from 'bcryptjs';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,19 +27,19 @@ export async function GET(request: Request) {
       }, skip, take: limit
     }), prisma.user.count()]);
     return NextResponse.json({ items, total, page, limit, totalPages: Math.max(1, Math.ceil(total / limit)) });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error fetching users:', error);
-    return NextResponse.json({ error: 'Failed to fetch users', detail: error?.message }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to fetch users', detail: error instanceof Error ? error.message : undefined }, { status: 500 });
   }
 }
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { name, email, role, phone, address } = body;
+    const { name, email, password, role, phone, address } = body;
 
-    if (!email) {
-      return NextResponse.json({ error: 'Email là bắt buộc' }, { status: 400 });
+    if (!email || typeof password !== 'string' || password.length < 6) {
+      return NextResponse.json({ error: 'Email và mật khẩu tối thiểu 6 ký tự là bắt buộc' }, { status: 400 });
     }
 
     // Kiểm tra email trùng
@@ -53,6 +54,8 @@ export async function POST(request: Request) {
       data: {
         name: name || email.split('@')[0],
         email,
+        password: await bcrypt.hash(password, 12),
+        emailVerified: new Date(),
         role: role === 'ADMIN' ? 'ADMIN' : 'USER',
         phone: phone || null,
         address: address || null,
@@ -72,8 +75,8 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json(newUser, { status: 201 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error creating user:', error);
-    return NextResponse.json({ error: 'Không thể tạo người dùng', detail: error?.message }, { status: 500 });
+    return NextResponse.json({ error: 'Không thể tạo người dùng', detail: error instanceof Error ? error.message : undefined }, { status: 500 });
   }
 }

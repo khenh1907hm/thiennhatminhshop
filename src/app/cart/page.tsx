@@ -9,6 +9,8 @@ import { useNotification } from "@/context/NotificationContext";
 import { useSession } from "next-auth/react";
 import { formatPrice, applyPromotion, type PromoLike } from "@/lib/formatPrice";
 
+type AddressOption = { code: number; name: string; districts?: AddressOption[]; wards?: AddressOption[] };
+
 export default function Cart() {
   const { items, updateQuantity, removeFromCart, clearCart } = useCart();
   const { showNotification } = useNotification();
@@ -20,6 +22,9 @@ export default function Cart() {
   // Guest vs Member state
   const [isGuest, setIsGuest] = useState(true);
   const [checkoutSettings, setCheckoutSettings] = useState({ allowGuestCheckout: true, pricesIncludeTax: true, taxName: "VAT", taxRate: 10 });
+  const [provinces, setProvinces] = useState<AddressOption[]>([]);
+  const [districts, setDistricts] = useState<AddressOption[]>([]);
+  const [wards, setWards] = useState<AddressOption[]>([]);
 
   // Guest Customer Form Fields (Bắt buộc điền đầy đủ thông tin)
   const [customerInfo, setCustomerInfo] = useState({
@@ -31,7 +36,10 @@ export default function Cart() {
     ward: "",
     addressDetail: "",
     note: "",
-    paymentMethod: "cod" // 'cod' | 'qr'
+    paymentMethod: "cod",
+    provinceCode: "",
+    districtCode: "",
+    wardCode: ""
   });
 
   const [promoCode, setPromoCode] = useState("");
@@ -54,12 +62,35 @@ export default function Cart() {
           setCustomerInfo(prev => ({
             ...prev,
             phone: data.phone || prev.phone,
-            addressDetail: data.address || prev.addressDetail,
+            addressDetail: data.address?.split(",")[0]?.trim() || prev.addressDetail,
           }));
         }
       }).catch(e => {});
     }
   }, [session]);
+
+  useEffect(() => {
+    fetch("https://provinces.open-api.vn/api/?depth=1")
+      .then((response) => response.json())
+      .then((data: AddressOption[]) => setProvinces(data))
+      .catch(() => showNotification("Không thể tải danh sách tỉnh/thành phố", "error"));
+  }, [showNotification]);
+
+  useEffect(() => {
+    if (!customerInfo.provinceCode) return;
+    fetch(`https://provinces.open-api.vn/api/p/${customerInfo.provinceCode}?depth=2`)
+      .then((response) => response.json())
+      .then((data: AddressOption) => setDistricts(data.districts || []))
+      .catch(() => showNotification("Không thể tải danh sách quận/huyện", "error"));
+  }, [customerInfo.provinceCode, showNotification]);
+
+  useEffect(() => {
+    if (!customerInfo.districtCode) return;
+    fetch(`https://provinces.open-api.vn/api/d/${customerInfo.districtCode}?depth=2`)
+      .then((response) => response.json())
+      .then((data: AddressOption) => setWards(data.wards || []))
+      .catch(() => showNotification("Không thể tải danh sách phường/xã", "error"));
+  }, [customerInfo.districtCode, showNotification]);
 
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [orderSuccessId, setOrderSuccessId] = useState<string | null>(null);
@@ -377,28 +408,54 @@ export default function Cart() {
                           <div>
                             <label className="block text-xs font-semibold text-on-surface mb-1">Tỉnh / Thành phố *</label>
                             <select
-                              value={customerInfo.province}
-                              onChange={(e) => setCustomerInfo({ ...customerInfo, province: e.target.value })}
+                              required
+                              value={customerInfo.provinceCode}
+                              onChange={(e) => {
+                                const option = provinces.find((item) => String(item.code) === e.target.value);
+                                setDistricts([]);
+                                setWards([]);
+                                setCustomerInfo({ ...customerInfo, provinceCode: e.target.value, province: option?.name || "", districtCode: "", district: "", wardCode: "", ward: "" });
+                              }}
                               className="w-full px-4 py-2.5 bg-surface-container-low border border-outline-variant rounded-xl text-sm focus:outline-none focus:border-primary cursor-pointer"
                             >
-                              <option value="TP. Hồ Chí Minh">TP. Hồ Chí Minh</option>
-                              <option value="Hà Nội">Hà Nội</option>
-                              <option value="Đà Nẵng">Đà Nẵng</option>
-                              <option value="Bình Dương">Bình Dương</option>
-                              <option value="Đồng Nai">Đồng Nai</option>
+                              <option value="">Chọn tỉnh / thành phố</option>
+                              {provinces.map((option) => <option key={option.code} value={option.code}>{option.name}</option>)}
                             </select>
                           </div>
 
                           <div>
                             <label className="block text-xs font-semibold text-on-surface mb-1">Quận / Huyện *</label>
-                            <input
-                              type="text"
+                            <select
                               required
-                              placeholder="VD: Quận 1, Quận 5, Thủ Đức..."
-                              value={customerInfo.district}
-                              onChange={(e) => setCustomerInfo({ ...customerInfo, district: e.target.value })}
-                              className="w-full px-4 py-2.5 bg-surface-container-low border border-outline-variant rounded-xl text-sm focus:outline-none focus:border-primary"
-                            />
+                              value={customerInfo.districtCode}
+                              disabled={!customerInfo.provinceCode}
+                              onChange={(e) => {
+                                const option = districts.find((item) => String(item.code) === e.target.value);
+                                setWards([]);
+                                setCustomerInfo({ ...customerInfo, districtCode: e.target.value, district: option?.name || "", wardCode: "", ward: "" });
+                              }}
+                              className="w-full px-4 py-2.5 bg-surface-container-low border border-outline-variant rounded-xl text-sm focus:outline-none focus:border-primary disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              <option value="">Chọn quận / huyện</option>
+                              {districts.map((option) => <option key={option.code} value={option.code}>{option.name}</option>)}
+                            </select>
+                          </div>
+
+                          <div className="md:col-span-2">
+                            <label className="block text-xs font-semibold text-on-surface mb-1">Phường / Xã *</label>
+                            <select
+                              required
+                              value={customerInfo.wardCode}
+                              disabled={!customerInfo.districtCode}
+                              onChange={(e) => {
+                                const option = wards.find((item) => String(item.code) === e.target.value);
+                                setCustomerInfo({ ...customerInfo, wardCode: e.target.value, ward: option?.name || "" });
+                              }}
+                              className="w-full px-4 py-2.5 bg-surface-container-low border border-outline-variant rounded-xl text-sm focus:outline-none focus:border-primary disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              <option value="">Chọn phường / xã</option>
+                              {wards.map((option) => <option key={option.code} value={option.code}>{option.name}</option>)}
+                            </select>
                           </div>
 
                           <div className="md:col-span-2">
@@ -406,7 +463,7 @@ export default function Cart() {
                             <input
                               type="text"
                               required
-                              placeholder="VD: Số 123 Đường Nguyễn Văn Cừ, Phường 2"
+                              placeholder="VD: Số 123 Đường Nguyễn Văn Cừ"
                               value={customerInfo.addressDetail}
                               onChange={(e) => setCustomerInfo({ ...customerInfo, addressDetail: e.target.value })}
                               className="w-full px-4 py-2.5 bg-surface-container-low border border-outline-variant rounded-xl text-sm focus:outline-none focus:border-primary"
@@ -437,18 +494,17 @@ export default function Cart() {
                             </div>
                           </label>
 
-                          <label className="flex items-center gap-3 p-4 border border-outline-variant rounded-xl cursor-pointer hover:bg-surface-container-low transition-colors">
+                          <label className="flex items-center gap-3 p-4 border border-outline-variant rounded-xl cursor-not-allowed opacity-60">
                             <input
                               type="radio"
                               name="paymentMethod"
                               value="qr"
-                              checked={customerInfo.paymentMethod === "qr"}
-                              onChange={() => setCustomerInfo({ ...customerInfo, paymentMethod: "qr" })}
+                              disabled
                               className="text-primary focus:ring-primary"
                             />
                             <div>
-                              <p className="text-sm font-semibold text-on-surface">Chuyển khoản QR Bank (VietQR)</p>
-                              <p className="text-xs text-outline">Mã QR chuyển khoản tự động nhập số tiền và nội dung đơn hàng.</p>
+                              <p className="text-sm font-semibold text-on-surface">Chuyển khoản QR Bank (chưa tích hợp)</p>
+                              <p className="text-xs text-outline">Tạm thời chưa khả dụng. Vui lòng chọn thanh toán khi nhận hàng.</p>
                             </div>
                           </label>
                         </div>

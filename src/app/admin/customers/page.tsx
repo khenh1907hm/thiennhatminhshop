@@ -44,6 +44,7 @@ export default function AdminCustomersPage() {
   const [createForm, setCreateForm] = useState({
     name: "",
     email: "",
+    password: "",
     phone: "",
     address: "",
     role: "USER",
@@ -152,7 +153,7 @@ export default function AdminCustomersPage() {
       if (!res.ok) throw new Error(data.error || "Không thể tạo tài khoản");
 
       showNotification("Tạo tài khoản thành công", "success");
-      setCreateForm({ name: "", email: "", phone: "", address: "", role: "USER" });
+      setCreateForm({ name: "", email: "", password: "", phone: "", address: "", role: "USER" });
       setIsCreateOpen(false);
       fetchUsers();
     } catch (error: any) {
@@ -479,6 +480,21 @@ export default function AdminCustomersPage() {
                   placeholder="Nguyễn Văn A"
                   value={createForm.name}
                   onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
+                  className="w-full bg-surface-container-low border border-outline-variant rounded-xl px-3 py-2 text-xs outline-none focus:border-primary"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-on-surface mb-1">
+                  Mật khẩu <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="password"
+                  required
+                  minLength={6}
+                  placeholder="Ít nhất 6 ký tự"
+                  value={createForm.password}
+                  onChange={(e) => setCreateForm({ ...createForm, password: e.target.value })}
                   className="w-full bg-surface-container-low border border-outline-variant rounded-xl px-3 py-2 text-xs outline-none focus:border-primary"
                 />
               </div>

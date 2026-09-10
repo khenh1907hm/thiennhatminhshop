@@ -38,13 +38,14 @@ export default function RegisterPage() {
       });
 
       if (!res.ok) {
-        const error = await res.text();
-        showNotification(error, "error");
+        const body = await res.json().catch(() => ({}));
+        showNotification(body.error || "Đăng ký thất bại", "error");
       } else {
         showNotification("Đăng ký thành công! Đang chuyển hướng...", "success");
-        setTimeout(() => router.push("/login"), 1500);
+        sessionStorage.setItem("pendingRegistrationPassword", formData.password);
+        setTimeout(() => router.push(`/verify-email?email=${encodeURIComponent(formData.email)}`), 800);
       }
-    } catch (error) {
+    } catch {
       showNotification("Đã có lỗi xảy ra", "error");
     } finally {
       setLoading(false);

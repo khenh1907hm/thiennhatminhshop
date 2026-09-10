@@ -43,9 +43,8 @@ export async function POST(request: Request) {
       );
     }
 
-    const paymentMethods = new Set(['cod', 'qr']);
-    if (typeof paymentMethod !== 'string' || !paymentMethods.has(paymentMethod)) {
-      return NextResponse.json({ error: 'Phương thức thanh toán không hợp lệ' }, { status: 400 });
+    if (paymentMethod !== 'cod') {
+      return NextResponse.json({ error: 'Thanh toán QR chưa được tích hợp. Vui lòng chọn thanh toán khi nhận hàng.' }, { status: 400 });
     }
 
     // Generate random order number ORD-XXXXXX
@@ -105,8 +104,9 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json({ success: true, order }, { status: 201 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error creating order:', error);
-    return NextResponse.json({ error: error.message || 'Failed to create order' }, { status: 400 });
+    const message = error instanceof Error ? error.message : 'Failed to create order';
+    return NextResponse.json({ error: message }, { status: 400 });
   }
 }
