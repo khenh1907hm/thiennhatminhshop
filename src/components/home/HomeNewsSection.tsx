@@ -95,6 +95,9 @@ export default function HomeNewsSection() {
                     src={post.coverImage}
                     alt={post.title}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    onError={(event) => {
+                      event.currentTarget.src = "/images/main-bg.jpg";
+                    }}
                   />
                 ) : (
                   <span className="material-symbols-outlined text-4xl text-outline/30">image</span>

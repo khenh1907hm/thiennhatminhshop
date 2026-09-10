@@ -150,7 +150,14 @@ export default function NewsList({
                 <div className="h-56 sm:h-64 bg-surface-container-low relative overflow-hidden flex items-center justify-center">
                   {posts[0].coverImage ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={posts[0].coverImage} alt={posts[0].title} className="block w-full h-full object-contain" />
+                    <img
+                      src={posts[0].coverImage}
+                      alt={posts[0].title}
+                      className="block w-full h-full object-contain"
+                      onError={(event) => {
+                        event.currentTarget.src = "/images/main-bg.jpg";
+                      }}
+                    />
                   ) : (
                     <span className="text-sm text-outline">Chưa có ảnh</span>
                   )}
@@ -183,7 +190,14 @@ export default function NewsList({
                   <div className="h-44 sm:h-52 bg-surface-container-low relative overflow-hidden flex items-center justify-center">
                     {post.coverImage ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={post.coverImage} alt={post.title} className="block w-full h-full object-contain" />
+                      <img
+                        src={post.coverImage}
+                        alt={post.title}
+                        className="block w-full h-full object-contain"
+                        onError={(event) => {
+                          event.currentTarget.src = "/images/main-bg.jpg";
+                        }}
+                      />
                     ) : (
                       <span className="text-sm text-outline">Chưa có ảnh</span>
                     )}

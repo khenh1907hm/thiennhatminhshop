@@ -80,7 +80,7 @@ export default function SitePopup() {
       onClick={close}
     >
       <div
-        className="relative w-fit max-w-[min(92vw,100%)]"
+        className="relative flex w-full justify-center"
         style={{ maxWidth: `min(92vw, ${popup.maxWidth || 520}px)` }}
         onClick={(e) => e.stopPropagation()}
       >
