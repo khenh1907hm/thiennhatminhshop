@@ -4,6 +4,7 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { Metadata } from "next";
 import Link from "next/link";
+import ShareButtons from "@/components/news/ShareButtons";
 
 export const dynamic = "force-dynamic";
 
@@ -204,6 +205,8 @@ export default async function NewsDetailPage({
                 className="article-body"
                 dangerouslySetInnerHTML={{ __html: post.content }}
               />
+
+              <ShareButtons title={post.title} />
 
               {post.tags && post.tags.length > 0 && (
                 <div className="mt-10 pt-6 border-t border-outline-variant/60">

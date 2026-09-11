@@ -3,9 +3,13 @@ import prisma from "@/lib/prisma";
 import { randomInt } from "crypto";
 import { sendEmail, buildCodeEmail } from "@/lib/email";
 import { NextResponse } from "next/server";
+import { checkRateLimit, getClientKey, rateLimitResponse } from "@/lib/rateLimit";
+import { isValidEmail } from "@/lib/validation";
 
 export async function POST(request: Request) {
   try {
+    const rate = checkRateLimit(getClientKey(request, "register"), 5, 15 * 60 * 1000);
+    if (!rate.allowed) return rateLimitResponse(rate.retryAfterSeconds);
     const body = await request.json();
     const { name, password } = body;
     const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
@@ -13,6 +17,9 @@ export async function POST(request: Request) {
     if (!name || !email || !password) {
       return new NextResponse("Thiếu thông tin bắt buộc", { status: 400 });
     }
+    if (typeof name !== "string" || name.trim().length < 2 || name.trim().length > 100) return NextResponse.json({ error: "Họ tên không hợp lệ" }, { status: 400 });
+    if (!isValidEmail(email)) return NextResponse.json({ error: "Email không hợp lệ" }, { status: 400 });
+    if (typeof password !== "string" || password.length < 8 || password.length > 128) return NextResponse.json({ error: "Mật khẩu phải từ 8 đến 128 ký tự" }, { status: 400 });
     if (!process.env.RESEND_API_KEY || !process.env.EMAIL_FROM) {
       return NextResponse.json({ error: "Hệ thống email chưa được cấu hình" }, { status: 503 });
     }

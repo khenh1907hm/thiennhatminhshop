@@ -4,17 +4,17 @@ import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import type { PopupItem } from "@/lib/popup";
 
-const cacheKey = (id: string) => `tnm_popup_shows_${id}`;
+const cacheKey = (id: string, version: string) => `tnm_popup_shows_${id}_${version}`;
 
-function getShowCount(id: string) {
+function getShowCount(id: string, version: string) {
   if (typeof window === "undefined") return 0;
-  const n = parseInt(localStorage.getItem(cacheKey(id)) || "0", 10);
+  const n = parseInt(localStorage.getItem(cacheKey(id, version)) || "0", 10);
   return Number.isFinite(n) ? n : 0;
 }
 
-function bumpShowCount(id: string) {
-  const next = getShowCount(id) + 1;
-  localStorage.setItem(cacheKey(id), String(next));
+function bumpShowCount(id: string, version: string) {
+  const next = getShowCount(id, version) + 1;
+  localStorage.setItem(cacheKey(id, version), String(next));
   return next;
 }
 
@@ -23,28 +23,31 @@ export default function SitePopup() {
   const [queue, setQueue] = useState<PopupItem[]>([]);
   const [index, setIndex] = useState(0);
   const [open, setOpen] = useState(false);
+  const [configVersion, setConfigVersion] = useState("v1");
 
   useEffect(() => {
-    if (pathname?.startsWith("/admin")) return;
+    if (pathname !== "/") return;
 
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch("/api/popup");
+        const res = await fetch("/api/popup", { cache: "no-store" });
         const data = await res.json();
+        const version = typeof data.updatedAt === "string" ? data.updatedAt : "v1";
         const max = data.maxShowsPerPopup || 3;
         const items: PopupItem[] = Array.isArray(data.items) ? data.items : [];
         const eligible = items.filter((item) => {
           if (!item.imageUrl) return false;
-          return getShowCount(item.id) < max;
+          return getShowCount(item.id, version) < max;
         });
 
         if (cancelled || eligible.length === 0) return;
 
         setQueue(eligible);
         setIndex(0);
+        setConfigVersion(version);
         setOpen(true);
-        bumpShowCount(eligible[0].id);
+        bumpShowCount(eligible[0].id, version);
       } catch {
         /* ignore */
       }
@@ -55,7 +58,7 @@ export default function SitePopup() {
     };
   }, [pathname]);
 
-  if (pathname?.startsWith("/admin") || !open || queue.length === 0) return null;
+  if (pathname !== "/" || !open || queue.length === 0) return null;
 
   const popup = queue[index];
   if (!popup) return null;
@@ -63,7 +66,7 @@ export default function SitePopup() {
   const close = () => {
     const next = index + 1;
     if (next < queue.length) {
-      bumpShowCount(queue[next].id);
+      bumpShowCount(queue[next].id, configVersion);
       setIndex(next);
     } else {
       setOpen(false);

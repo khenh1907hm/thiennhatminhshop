@@ -8,8 +8,7 @@ import { useCart } from "@/context/CartContext";
 import { useNotification } from "@/context/NotificationContext";
 import { useSession } from "next-auth/react";
 import { formatPrice, applyPromotion, type PromoLike } from "@/lib/formatPrice";
-
-type AddressOption = { code: number; name: string; districts?: AddressOption[]; wards?: AddressOption[] };
+import { parseAddressOption, parseAddressOptions, type AddressOption } from "@/lib/address";
 
 export default function Cart() {
   const { items, updateQuantity, removeFromCart, clearCart } = useCart();
@@ -72,7 +71,7 @@ export default function Cart() {
   useEffect(() => {
     fetch("https://provinces.open-api.vn/api/?depth=1")
       .then((response) => response.json())
-      .then((data: AddressOption[]) => setProvinces(data))
+      .then((data) => setProvinces(parseAddressOptions(data)))
       .catch(() => showNotification("Không thể tải danh sách tỉnh/thành phố", "error"));
   }, [showNotification]);
 
@@ -80,7 +79,7 @@ export default function Cart() {
     if (!customerInfo.provinceCode) return;
     fetch(`https://provinces.open-api.vn/api/p/${customerInfo.provinceCode}?depth=2`)
       .then((response) => response.json())
-      .then((data: AddressOption) => setDistricts(data.districts || []))
+      .then((data) => setDistricts(parseAddressOption(data).districts || []))
       .catch(() => showNotification("Không thể tải danh sách quận/huyện", "error"));
   }, [customerInfo.provinceCode, showNotification]);
 
@@ -88,7 +87,7 @@ export default function Cart() {
     if (!customerInfo.districtCode) return;
     fetch(`https://provinces.open-api.vn/api/d/${customerInfo.districtCode}?depth=2`)
       .then((response) => response.json())
-      .then((data: AddressOption) => setWards(data.wards || []))
+      .then((data) => setWards(parseAddressOption(data).wards || []))
       .catch(() => showNotification("Không thể tải danh sách phường/xã", "error"));
   }, [customerInfo.districtCode, showNotification]);
 

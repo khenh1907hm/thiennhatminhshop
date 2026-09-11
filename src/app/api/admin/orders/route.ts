@@ -1,9 +1,17 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
+async function requireAdmin() {
+  const session = await getServerSession(authOptions);
+  return session && (session.user as { role?: string }).role === 'ADMIN';
+}
+
 export async function GET(request: Request) {
+  if (!(await requireAdmin())) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   try {
     const { searchParams } = new URL(request.url);
     const page = Math.max(1, Number(searchParams.get('page')) || 1);

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { parseNonNegativeMoney, parseNonNegativeInteger } from '@/lib/validation';
 
 export async function GET(
   request: Request,
@@ -36,6 +37,12 @@ export async function PUT(
       name, slug, sku, brand, description, price, originalPrice, 
       discount, stock, images, isFeatured, specs, documents, categoryId 
     } = body;
+    const numericPrice = typeof price === 'number' ? price : Number(price);
+    const numericStock = typeof stock === 'number' ? stock : Number(stock);
+    const numericOriginalPrice = originalPrice === undefined || originalPrice === null || originalPrice === '' ? null : parseNonNegativeMoney(originalPrice);
+    if (parseNonNegativeMoney(numericPrice) === null || parseNonNegativeInteger(numericStock) === null || (originalPrice !== undefined && originalPrice !== null && originalPrice !== '' && numericOriginalPrice === null)) {
+      return NextResponse.json({ error: 'Giá và tồn kho phải là số không âm hợp lệ' }, { status: 400 });
+    }
 
     const product = await prisma.product.update({
       where: { id },
@@ -45,10 +52,10 @@ export async function PUT(
         sku,
         brand,
         description,
-        price,
-        originalPrice: originalPrice != null && originalPrice !== '' ? originalPrice : null,
+        price: numericPrice,
+        originalPrice: numericOriginalPrice,
         discount: discount || null,
-        stock,
+        stock: numericStock,
         images: images || [],
         isFeatured: isFeatured || false,
         specs: specs || null,

@@ -3,8 +3,10 @@ import prisma from "@/lib/prisma";
 import * as XLSX from "xlsx";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
+import { hasExcelSignature, isExcelFile } from "@/lib/fileValidation";
 
 export const dynamic = "force-dynamic";
+const MAX_EXCEL_SIZE = 10 * 1024 * 1024;
 
 type IncomingItem = {
   productId?: string | null;
@@ -121,6 +123,10 @@ export async function POST(request: Request) {
 
       const file = form.get("excel") as File | null;
       if (file && file.size > 0) {
+        const extension = path.extname(file.name).toLowerCase();
+        if (file.size > MAX_EXCEL_SIZE || !isExcelFile(file.name, file.type) || !hasExcelSignature(Buffer.from(await file.arrayBuffer()), extension)) {
+          return NextResponse.json({ error: "File báo giá phải là Excel hợp lệ (.xls/.xlsx), tối đa 10MB" }, { status: 400 });
+        }
         const bytes = await file.arrayBuffer();
         const buffer = Buffer.from(bytes);
         const fromExcel = parseExcelBuffer(buffer);

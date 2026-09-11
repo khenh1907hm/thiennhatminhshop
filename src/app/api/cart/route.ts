@@ -74,7 +74,9 @@ export async function POST(request: Request) {
     // Bulk sync (gộp từ localStorage)
     if (items && Array.isArray(items)) {
       for (const item of items) {
-        if (!item.productId) continue;
+        if (!item.productId || !Number.isInteger(item.quantity) || item.quantity <= 0 || item.quantity > 1000) {
+          return NextResponse.json({ error: 'Số lượng sản phẩm phải là số nguyên dương' }, { status: 400 });
+        }
         const productExists = await prisma.product.findUnique({
           where: { id: item.productId },
           select: { id: true }
@@ -87,11 +89,11 @@ export async function POST(request: Request) {
         if (existingItem) {
           await prisma.cartItem.update({
             where: { id: existingItem.id },
-            data: { quantity: existingItem.quantity + (item.quantity || 1) }
+            data: { quantity: existingItem.quantity + item.quantity }
           });
         } else {
           await prisma.cartItem.create({
-            data: { cartId: cart.id, productId: item.productId, quantity: item.quantity || 1 }
+            data: { cartId: cart.id, productId: item.productId, quantity: item.quantity }
           });
         }
       }
@@ -99,7 +101,7 @@ export async function POST(request: Request) {
     }
 
     // Single item add
-    if (productId && quantity) {
+    if (typeof productId === 'string' && productId && Number.isInteger(quantity) && quantity > 0 && quantity <= 1000) {
       const productExists = await prisma.product.findUnique({
         where: { id: productId },
         select: { id: true }
@@ -124,7 +126,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true });
     }
 
-    return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
+    return NextResponse.json({ error: 'Số lượng sản phẩm phải là số nguyên dương' }, { status: 400 });
   } catch (error) {
     console.error('Error adding to cart:', error);
     return NextResponse.json({ error: 'Failed to add to cart' }, { status: 500 });

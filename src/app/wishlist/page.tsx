@@ -41,7 +41,7 @@ export default function WishlistPage() {
               Bạn chưa có sản phẩm nào trong danh sách yêu thích. Hãy dạo một vòng và thả tim cho những món đồ bạn thích nhé.
             </p>
             <Link
-              href="/shop"
+              href="/"
               className="px-6 py-3 bg-primary text-white font-bold rounded-xl hover:bg-primary/90 transition-colors shadow-md"
             >
               Tiếp tục mua sắm

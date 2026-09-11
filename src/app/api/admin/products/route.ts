@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { parseNonNegativeMoney, parseNonNegativeInteger } from '@/lib/validation';
 
 export const dynamic = 'force-dynamic';
 
@@ -60,6 +61,12 @@ export async function POST(request: Request) {
     if (!name || !slug || !sku || price === undefined || stock === undefined || !categoryId) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
+    const numericPrice = typeof price === 'number' ? price : parseFloat(price);
+    const numericStock = typeof stock === 'number' ? stock : Number(stock);
+    const numericOriginalPrice = originalPrice === undefined || originalPrice === null || originalPrice === '' ? null : parseNonNegativeMoney(originalPrice);
+    if (parseNonNegativeMoney(numericPrice) === null || parseNonNegativeInteger(numericStock) === null || (originalPrice !== undefined && originalPrice !== null && originalPrice !== '' && numericOriginalPrice === null)) {
+      return NextResponse.json({ error: 'Giá và tồn kho phải là số không âm hợp lệ' }, { status: 400 });
+    }
 
     const product = await prisma.product.create({
       data: {
@@ -68,10 +75,10 @@ export async function POST(request: Request) {
         sku,
         brand,
         description: description || '',
-        price: typeof price === 'number' ? price : parseFloat(price),
-        originalPrice: originalPrice ? (typeof originalPrice === 'number' ? originalPrice : parseFloat(originalPrice)) : null,
+        price: numericPrice,
+        originalPrice: numericOriginalPrice,
         discount: discount || null,
-        stock,
+        stock: numericStock,
         images: images || [],
         isFeatured: isFeatured || false,
         specs: specs || null,

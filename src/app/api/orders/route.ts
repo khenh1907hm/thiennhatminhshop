@@ -2,9 +2,13 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions, getUserIdFromSession } from '@/lib/auth';
+import { checkRateLimit, getClientKey, rateLimitResponse } from '@/lib/rateLimit';
+import { isValidEmail, isValidVietnamesePhone } from '@/lib/validation';
 
 export async function POST(request: Request) {
   try {
+    const rate = checkRateLimit(getClientKey(request, 'order'), 10, 10 * 60 * 1000);
+    if (!rate.allowed) return rateLimitResponse(rate.retryAfterSeconds);
     const session = await getServerSession(authOptions);
     const userId = await getUserIdFromSession(session);
 
@@ -28,6 +32,10 @@ export async function POST(request: Request) {
     if (!Array.isArray(items) || items.length === 0) {
       return NextResponse.json({ error: 'Order must contain items' }, { status: 400 });
     }
+    if (typeof customerName !== 'string' || customerName.trim().length < 2 || customerName.trim().length > 100) return NextResponse.json({ error: 'Họ tên không hợp lệ' }, { status: 400 });
+    if (!isValidVietnamesePhone(customerPhone)) return NextResponse.json({ error: 'Số điện thoại không hợp lệ' }, { status: 400 });
+    if (customerEmail && !isValidEmail(customerEmail)) return NextResponse.json({ error: 'Email không hợp lệ' }, { status: 400 });
+    if (typeof shippingAddress !== 'string' || shippingAddress.trim().length < 5 || shippingAddress.length > 500) return NextResponse.json({ error: 'Địa chỉ giao hàng không hợp lệ' }, { status: 400 });
 
     const normalizedItems = new Map<string, number>();
     for (const item of items) {
@@ -61,9 +69,6 @@ export async function POST(request: Request) {
         if (!product) {
           throw new Error(`Product ${productId} not found`);
         }
-        if (product.stock < quantity) {
-          throw new Error(`Insufficient stock for product ${product.name}`);
-        }
         const price = Number(product.price);
         pricedItems.push({ productId, quantity, price });
         calculatedTotal += price * quantity;
@@ -71,10 +76,11 @@ export async function POST(request: Request) {
 
       // 2. Deduct stock
       for (const item of pricedItems) {
-        await tx.product.update({
-          where: { id: item.productId },
+        const result = await tx.product.updateMany({
+          where: { id: item.productId, stock: { gte: item.quantity } },
           data: { stock: { decrement: item.quantity } }
         });
+        if (result.count !== 1) throw new Error(`Insufficient stock for product ${item.productId}`);
       }
 
       // 3. Create Order
@@ -101,7 +107,7 @@ export async function POST(request: Request) {
           orderItems: true
         }
       });
-    });
+    }, { isolationLevel: 'Serializable' });
 
     return NextResponse.json({ success: true, order }, { status: 201 });
   } catch (error: unknown) {

@@ -13,6 +13,9 @@ export async function PUT(request: Request) {
     }
 
     const { productId, delta } = await request.json();
+    if (typeof productId !== 'string' || !productId || !Number.isInteger(delta)) {
+      return NextResponse.json({ error: 'Dữ liệu cập nhật giỏ hàng không hợp lệ' }, { status: 400 });
+    }
 
     const cart = await prisma.cart.findUnique({ where: { userId } });
     if (!cart) return NextResponse.json({ error: 'Cart not found' }, { status: 404 });

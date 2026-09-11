@@ -4,6 +4,7 @@ import GoogleProvider from "next-auth/providers/google";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
+import { checkRateLimit, getClientKey } from "@/lib/rateLimit";
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma) as any,
@@ -17,7 +18,9 @@ export const authOptions: NextAuthOptions = {
         email: { label: "Email", type: "email", placeholder: "you@example.com" },
         password: { label: "Mật khẩu", type: "password" }
       },
-      async authorize(credentials) {
+      async authorize(credentials, request) {
+        const rate = checkRateLimit(getClientKey(request, "login"), 10, 15 * 60 * 1000);
+        if (!rate.allowed) throw new Error("Bạn đăng nhập quá nhiều lần. Vui lòng thử lại sau.");
         if (!credentials?.email || !credentials?.password) {
           throw new Error("Vui lòng nhập email và mật khẩu.");
         }

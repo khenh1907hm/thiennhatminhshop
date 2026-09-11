@@ -94,6 +94,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   }, [session?.user?.email, status]);
 
   const addToCart = async (product: Product, quantity: number) => {
+    const safeQuantity = Number.isInteger(quantity) ? Math.max(1, quantity) : 1;
     const prevItems = [...items];
     const existingIndex = items.findIndex((item) => item.product.id === product.id);
     const updated = [...items];
@@ -101,10 +102,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     if (existingIndex > -1) {
       updated[existingIndex] = {
         ...updated[existingIndex],
-        quantity: updated[existingIndex].quantity + quantity
+        quantity: updated[existingIndex].quantity + safeQuantity
       };
     } else {
-      updated.push({ product, quantity });
+      updated.push({ product, quantity: safeQuantity });
     }
 
     setItems(updated);
@@ -114,7 +115,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         const res = await fetch('/api/cart', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ productId: product.id, quantity })
+          body: JSON.stringify({ productId: product.id, quantity: safeQuantity })
         });
         if (!res.ok) throw new Error("API Failed");
       } catch (error) {

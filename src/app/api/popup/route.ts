@@ -28,6 +28,7 @@ export async function GET() {
     return NextResponse.json({
       items,
       maxShowsPerPopup: store.maxShowsPerPopup || 3,
+      updatedAt: store.updatedAt || null,
     });
   } catch (error) {
     console.error('Error fetching popup:', error);

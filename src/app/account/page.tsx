@@ -7,11 +7,10 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import OrderHistory from "@/components/account/OrderHistory";
 import { useNotification } from "@/context/NotificationContext";
+import { parseAddressOption, parseAddressOptions, type AddressOption } from "@/lib/address";
 
 type Profile = { name: string | null; email: string | null; phone: string | null; address: string | null; createdAt: string };
 type Tab = "profile" | "orders" | "addresses";
-type AddressOption = { code: number; name: string; districts?: AddressOption[]; wards?: AddressOption[] };
-
 function AccountContent() {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -100,17 +99,17 @@ function DefaultAddressFields({ value, onChange }: { value: string; onChange: (v
   const [detail, setDetail] = useState(value.split(",")[0]?.trim() || "");
 
   useEffect(() => {
-    fetch("https://provinces.open-api.vn/api/?depth=1").then((response) => response.json()).then(setProvinces).catch(() => {});
+    fetch("https://provinces.open-api.vn/api/?depth=1").then((response) => response.json()).then((data) => setProvinces(parseAddressOptions(data))).catch(() => {});
   }, []);
 
   useEffect(() => {
     if (!province) return;
-    fetch(`https://provinces.open-api.vn/api/p/${province}?depth=2`).then((response) => response.json()).then((data: AddressOption) => setDistricts(data.districts || [])).catch(() => {});
+    fetch(`https://provinces.open-api.vn/api/p/${province}?depth=2`).then((response) => response.json()).then((data) => setDistricts(parseAddressOption(data).districts || [])).catch(() => {});
   }, [province]);
 
   useEffect(() => {
     if (!district) return;
-    fetch(`https://provinces.open-api.vn/api/d/${district}?depth=2`).then((response) => response.json()).then((data: AddressOption) => setWards(data.wards || [])).catch(() => {});
+    fetch(`https://provinces.open-api.vn/api/d/${district}?depth=2`).then((response) => response.json()).then((data) => setWards(parseAddressOption(data).wards || [])).catch(() => {});
   }, [district]);
 
   function updateAddress(next: { detail?: string; provinceName?: string; districtName?: string; wardName?: string }) {

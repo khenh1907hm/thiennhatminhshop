@@ -4,6 +4,8 @@ import path from 'path';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { put } from '@vercel/blob';
+import { hasFileSignature, type SupportedUploadType } from '@/lib/fileValidation';
+import { checkRateLimit, getClientKey, rateLimitResponse } from '@/lib/rateLimit';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const allowedMimeTypes = new Set([
@@ -21,6 +23,8 @@ export async function POST(request: Request) {
     if (session?.user?.role !== 'ADMIN') {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 403 });
     }
+    const rate = checkRateLimit(getClientKey(request, 'upload'), 30, 10 * 60 * 1000);
+    if (!rate.allowed) return rateLimitResponse(rate.retryAfterSeconds);
 
     const data = await request.formData();
     const file: File | null = data.get('file') as unknown as File;
@@ -37,6 +41,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: 'Dung lượng file phải từ 1 byte đến 10MB' }, { status: 400 });
     }
 
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
+    const typeByExtension: Record<string, SupportedUploadType> = {
+      '.pdf': 'pdf', '.jpg': 'jpeg', '.jpeg': 'jpeg', '.png': 'png', '.webp': 'webp', '.gif': 'gif',
+    };
+    if (!hasFileSignature(buffer, typeByExtension[extension])) {
+      return NextResponse.json({ success: false, error: 'Nội dung file không khớp với định dạng được khai báo' }, { status: 400 });
+    }
+
     const originalName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '');
     const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1e9)}-${originalName}`;
 
@@ -48,9 +61,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true, url: blob.url });
     }
 
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-
     // Create unique filename
     // Save to public/uploads
     const uploadDir = path.join(process.cwd(), 'public', 'uploads');
@@ -58,7 +68,7 @@ export async function POST(request: Request) {
     // Ensure directory exists
     try {
       await mkdir(uploadDir, { recursive: true });
-    } catch (err) {
+    } catch {
       // Directory might already exist
     }
 
