@@ -23,6 +23,9 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Thiên Nhật Minh - Sản Phẩm Thiết Bị Điện Chuyên Nghiệp",
   description: "Đơn vị cung cấp giải pháp điện công nghiệp hàng đầu khu vực.",
+  verification: {
+    google: "ZXx6ClR95-oLXenxw8h1Gxs4fhsgV4URiQLuSTY_WkU",
+  },
 };
 
 export default function RootLayout({
