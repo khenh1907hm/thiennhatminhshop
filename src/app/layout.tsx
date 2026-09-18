@@ -7,6 +7,7 @@ import { WishlistProvider } from "@/context/WishlistContext";
 import ZaloFloat from "@/components/ui/ZaloFloat";
 import SitePopup from "@/components/ui/SitePopup";
 import AuthProvider from "@/components/providers/AuthProvider";
+import MaterialSymbolsLoader from "@/components/providers/MaterialSymbolsLoader";
 
 const spaceGrotesk = Space_Grotesk({
   variable: "--font-headline",
@@ -21,8 +22,24 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Thiên Nhật Minh - Sản Phẩm Thiết Bị Điện Chuyên Nghiệp",
-  description: "Đơn vị cung cấp giải pháp điện công nghiệp hàng đầu khu vực.",
+  title: {
+    default: "Thiên Nhật Minh Shop",
+    template: "%s | Thiên Nhật Minh Shop",
+  },
+  description: "Thiên Nhật Minh Shop - Thiết bị điện công nghiệp chuyên nghiệp.",
+  applicationName: "Thiên Nhật Minh Shop",
+  openGraph: {
+    title: "Thiên Nhật Minh Shop",
+    description: "Thiết bị điện công nghiệp chuyên nghiệp.",
+    siteName: "Thiên Nhật Minh Shop",
+    locale: "vi_VN",
+    type: "website",
+  },
+  icons: {
+    icon: "/images/logo.png",
+    shortcut: "/images/logo.png",
+    apple: "/images/logo.png",
+  },
   verification: {
     google: "ZXx6ClR95-oLXenxw8h1Gxs4fhsgV4URiQLuSTY_WkU",
   },
@@ -39,14 +56,15 @@ export default function RootLayout({
       className={`${spaceGrotesk.variable} ${inter.variable} h-full antialiased`}
     >
       <head>
-        <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet" />
-        <link rel="icon" href="/images/logo.png" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       </head>
       <body className="min-h-full flex flex-col bg-surface font-body text-on-surface">
         <AuthProvider>
           <NotificationProvider>
             <WishlistProvider>
               <CartProvider>
+                <MaterialSymbolsLoader />
                 {children}
                 <ZaloFloat />
                 <SitePopup />

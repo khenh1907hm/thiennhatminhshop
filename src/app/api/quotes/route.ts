@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import * as XLSX from "xlsx";
-import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 import { hasExcelSignature, isExcelFile } from "@/lib/fileValidation";
+import { put } from "@vercel/blob";
 
 export const dynamic = "force-dynamic";
 const MAX_EXCEL_SIZE = 10 * 1024 * 1024;
@@ -132,11 +132,12 @@ export async function POST(request: Request) {
         const fromExcel = parseExcelBuffer(buffer);
         items = [...items, ...fromExcel];
 
-        const uploadDir = path.join(process.cwd(), "public", "uploads", "quotes");
-        await mkdir(uploadDir, { recursive: true });
         const filename = `${Date.now()}-${Math.round(Math.random() * 1e9)}-${file.name.replace(/[^a-zA-Z0-9.\-_]/g, "")}`;
-        await writeFile(path.join(uploadDir, filename), buffer);
-        excelUrl = `/uploads/quotes/${filename}`;
+        if (!process.env.BLOB_READ_WRITE_TOKEN) {
+          return NextResponse.json({ error: "Hệ thống lưu file chưa được cấu hình" }, { status: 503 });
+        }
+        const blob = await put(`uploads/quotes/${filename}`, file, { access: "public", addRandomSuffix: false });
+        excelUrl = blob.url;
       }
     } else {
       const body = await request.json();

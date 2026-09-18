@@ -30,7 +30,7 @@ export default function Cart() {
     fullName: "",
     phone: "",
     email: "",
-    province: "TP. Hồ Chí Minh",
+    province: "TP. Hồ Chí Min",
     district: "",
     ward: "",
     addressDetail: "",
@@ -202,7 +202,7 @@ export default function Cart() {
               <span className="text-xs font-semibold text-outline uppercase tracking-wider">Đặt hàng thành công</span>
               <h1 className="text-3xl font-bold text-on-surface font-headline mt-1">Mã đơn: #{orderSuccessId}</h1>
               <p className="text-sm text-on-surface-variant mt-2">
-                Cảm ơn <span className="font-semibold text-on-surface">{customerInfo.fullName}</span>! Đội ngũ kỹ sư Thiên Nhật Minh Eco sẽ liên hệ qua SĐT <span className="font-semibold text-on-surface">{customerInfo.phone}</span> để xác nhận lịch giao hàng.
+                Cảm ơn <span className="font-semibold text-on-surface">{customerInfo.fullName}</span>! Đội ngũ Thiên Nhật Minh Eco sẽ liên hệ qua SĐT <span className="font-semibold text-on-surface">{customerInfo.phone}</span> để xác nhận lịch giao hàng.
               </p>
             </div>
 

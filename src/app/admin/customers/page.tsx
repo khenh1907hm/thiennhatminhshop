@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useNotification } from "@/context/NotificationContext";
 import { formatPrice } from "@/lib/formatPrice";
+import { resolveStoredAddress } from "@/lib/address";
 
 interface CustomerUser {
   id: string;
@@ -52,6 +53,7 @@ export default function AdminCustomersPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [resolvedAddresses, setResolvedAddresses] = useState<Record<string, string>>({});
 
   const fetchUsers = async () => {
     try {
@@ -60,6 +62,9 @@ export default function AdminCustomersPage() {
       if (!res.ok) throw new Error("Failed to fetch users");
       const data = await res.json();
       setUsers(data.items || []); setTotalPages(data.totalPages || 1);
+      const addresses = [...new Set((data.items || []).map((user: CustomerUser) => user.address).filter(Boolean))] as string[];
+      const resolved = await Promise.all(addresses.map(async (address) => [address, await resolveStoredAddress(address)] as const));
+      setResolvedAddresses((current) => ({ ...current, ...Object.fromEntries(resolved) }));
     } catch (error) {
       console.error(error);
       showNotification("Lỗi tải danh sách khách hàng từ database", "error");
@@ -125,7 +130,7 @@ export default function AdminCustomersPage() {
       const res = await fetch(`/api/admin/users/${userId}`);
       if (!res.ok) throw new Error("Không thể tải thông tin chi tiết");
       const data = await res.json();
-      setSelectedUser(data);
+      setSelectedUser({ ...data, address: await resolveStoredAddress(data.address) });
     } catch (error: any) {
       console.error(error);
       showNotification(error.message || "Lỗi tải chi tiết", "error");
@@ -373,7 +378,7 @@ export default function AdminCustomersPage() {
                           {user.phone ? `📞 ${user.phone}` : <span className="text-outline italic">Chưa có SĐT</span>}
                         </p>
                         <p className="text-xs text-on-surface-variant truncate max-w-[200px] mt-0.5">
-                          {user.address ? `📍 ${user.address}` : <span className="text-outline italic">Chưa có địa chỉ</span>}
+                          {user.address ? `📍 ${resolvedAddresses[user.address] || user.address}` : <span className="text-outline italic">Chưa có địa chỉ</span>}
                         </p>
                       </td>
 

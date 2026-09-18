@@ -70,7 +70,7 @@ export default function ContactPage() {
               </div>
             </div>
 
-            <div className="bg-gradient-to-br from-slate-800 to-slate-700 rounded-2xl p-6 text-white space-y-2 shadow-md">
+            <div className="hidden-mobile bg-gradient-to-br from-slate-800 to-slate-700 rounded-2xl p-6 text-white space-y-2 shadow-md">
               <h3 className="font-bold text-sm font-headline">Thời gian làm việc</h3>
               <p className="text-xs text-slate-200">Thứ Hai - Thứ Bảy: 08:00 - 17:30</p>
               <p className="text-xs text-slate-200">Chủ Nhật: Hỗ trợ tư vấn khẩn cấp qua Hotline</p>

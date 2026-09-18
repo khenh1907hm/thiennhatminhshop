@@ -184,7 +184,7 @@ export default function DocsPage() {
             </div>
 
             {/* Info Banner */}
-            <div className="p-5 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-2xl text-white shadow-xl shadow-blue-500/15 relative overflow-hidden">
+            <div className="p-5 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-2xl text-white shadow-xl shadow-blue-500/15 relative overflow-hidden hidden-mobile">
               <span className="material-symbols-outlined text-3xl text-cyan-200 mb-2 animate-pulse select-none">
                 cloud_download
               </span>

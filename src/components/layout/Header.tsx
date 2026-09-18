@@ -6,6 +6,7 @@ import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
 import { useSession, signOut } from "next-auth/react";
 import { Suspense, useState, useEffect, useRef } from "react";
+import Image from "next/image";
 
 interface CategoryChild {
   id: string;
@@ -143,9 +144,12 @@ function HeaderContent() {
               href="/"
               className="shrink-0 flex items-center gap-2.5 group"
             >
-              <img
+              <Image
                 src="/images/logo.png"
                 alt="Thiên Nhật Minh"
+                width={128}
+                height={64}
+                priority
                 className="h-16 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
               />
             </Link>

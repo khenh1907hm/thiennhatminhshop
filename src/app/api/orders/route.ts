@@ -4,6 +4,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions, getUserIdFromSession } from '@/lib/auth';
 import { checkRateLimit, getClientKey, rateLimitResponse } from '@/lib/rateLimit';
 import { isValidEmail, isValidVietnamesePhone } from '@/lib/validation';
+import { escapeHtml, sendEmail } from '@/lib/email';
 
 export async function POST(request: Request) {
   try {
@@ -108,6 +109,18 @@ export async function POST(request: Request) {
         }
       });
     }, { isolationLevel: 'Serializable' });
+
+    const orderEmailSetting = await prisma.setting.findUnique({ where: { key: 'orderEmail' }, select: { value: true } });
+    let orderEmail = "";
+    try { orderEmail = orderEmailSetting?.value ? String(JSON.parse(orderEmailSetting.value)).trim() : ""; } catch { orderEmail = orderEmailSetting?.value?.trim() || ""; }
+    if (orderEmail && process.env.RESEND_API_KEY && process.env.EMAIL_FROM) {
+      const itemSummary = order.orderItems.map((item) => `${item.productId} x ${item.quantity}`).join(", ");
+      void sendEmail({
+        to: orderEmail,
+        subject: `Đơn hàng mới #${order.orderNumber}`,
+        html: `<h2>Đơn hàng mới #${escapeHtml(order.orderNumber)}</h2><p><b>Khách hàng:</b> ${escapeHtml(customerName)}</p><p><b>Số điện thoại:</b> ${escapeHtml(customerPhone)}</p><p><b>Email:</b> ${escapeHtml(customerEmail || "Không có")}</p><p><b>Địa chỉ:</b> ${escapeHtml(shippingAddress)}</p><p><b>Sản phẩm:</b> ${escapeHtml(itemSummary)}</p><p><b>Tổng tiền:</b> ${escapeHtml(order.totalAmount)} VND</p>`,
+      }).catch((error) => console.error('Order notification email failed:', error));
+    }
 
     return NextResponse.json({ success: true, order }, { status: 201 });
   } catch (error: unknown) {

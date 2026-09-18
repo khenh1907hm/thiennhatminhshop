@@ -51,6 +51,8 @@ export default function ProductCard({ product }: ProductCardProps) {
             alt={product.name}
             className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-105"
             src={Array.isArray((product as any).images) ? (product as any).images[0] : (product as any).image}
+            loading="lazy"
+            decoding="async"
           />
           {product.inStock && (
             <div className="absolute top-2 left-2 sm:top-3 sm:left-3 bg-emerald-500 text-white px-2 py-1 rounded-md text-[9px] sm:text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 shadow-sm">

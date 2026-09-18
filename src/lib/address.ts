@@ -43,3 +43,36 @@ export function parseAddressOption(payload: unknown): AddressOption {
     wards: parseAddressOptions(record.wards),
   };
 }
+
+const resolvedAddressCache = new Map<string, string>();
+
+export async function resolveStoredAddress(address: string | null | undefined): Promise<string> {
+  const value = address?.trim() || "";
+  if (!value) return value;
+  const cached = resolvedAddressCache.get(value);
+  if (cached) return cached;
+
+  const parts = value.split(",").map((part) => part.trim());
+  if (parts.length < 4) return value;
+  const codes = parts.slice(-3);
+  if (!codes.every((code) => /^\d+$/.test(code))) return value;
+
+  try {
+    const [provinceResponse, districtResponse] = await Promise.all([
+      fetch(`https://provinces.open-api.vn/api/p/${codes[2]}?depth=1`),
+      fetch(`https://provinces.open-api.vn/api/d/${codes[1]}?depth=2`),
+    ]);
+    if (!provinceResponse.ok || !districtResponse.ok) return value;
+
+    const province = parseAddressOption(await provinceResponse.json());
+    const district = parseAddressOption(await districtResponse.json());
+    const ward = district.wards?.find((item) => String(item.code) === codes[0]);
+    if (!province.name || !district.name || !ward?.name) return value;
+
+    const resolved = [...parts.slice(0, -3), ward.name, district.name, province.name].join(", ");
+    resolvedAddressCache.set(value, resolved);
+    return resolved;
+  } catch {
+    return value;
+  }
+}

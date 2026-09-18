@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useNotification } from "@/context/NotificationContext";
 import { formatPrice } from "@/lib/formatPrice";
+import { resolveStoredAddress } from "@/lib/address";
 
 interface OrderItem {
   id: string;
@@ -54,7 +55,9 @@ export default function AdminOrdersPage() {
       const res = await fetch(`/api/admin/orders?page=${page}&limit=20`);
       if (!res.ok) throw new Error("Failed to fetch orders");
       const data = await res.json();
-      setOrders(data.items || []); setTotalPages(data.totalPages || 1);
+      const items = data.items || [];
+      const resolvedItems = await Promise.all(items.map(async (order: Order) => ({ ...order, shippingAddress: await resolveStoredAddress(order.shippingAddress) })));
+      setOrders(resolvedItems); setTotalPages(data.totalPages || 1);
     } catch (error) {
       console.error(error);
       showNotification("Lỗi tải danh sách đơn hàng từ database", "error");

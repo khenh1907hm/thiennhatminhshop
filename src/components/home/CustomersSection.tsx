@@ -43,6 +43,10 @@ export default function CustomersSection() {
                 src={c.src}
                 alt={c.alt}
                 className="max-h-14 w-auto max-w-full object-contain"
+                width={160}
+                height={56}
+                loading="lazy"
+                decoding="async"
               />
             </div>
           ))}

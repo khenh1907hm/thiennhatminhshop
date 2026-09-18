@@ -41,6 +41,7 @@ function HomeContent() {
   const isBrandsTab = activeTab === "brands";
 
   const [selectedCategory, setSelectedCategory] = useState(urlCategoryQuery || "ALL");
+  const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState(urlSearchQuery);
   const [debouncedSearch, setDebouncedSearch] = useState(urlSearchQuery);
   const [sortBy, setSortBy] = useState("newest");
@@ -182,7 +183,14 @@ function HomeContent() {
                 return (
                   <div key={group.id} className="relative group/category">
                     <div
-                      onClick={() => handleCategorySelect(group.id, group.name)}
+                      onClick={() => {
+                        handleCategorySelect(group.id, group.name);
+                        if (hasChildren) {
+                          setExpandedCategory((current) =>
+                            current === group.id ? null : group.id
+                          );
+                        }
+                      }}
                       className={`flex items-center justify-between px-4 py-2.5 mx-2 my-0.5 cursor-pointer transition-all duration-200 rounded-xl ${
                         isGroupActive
                           ? "bg-primary/10 text-primary font-bold border border-primary/20"
@@ -200,12 +208,11 @@ function HomeContent() {
                     </div>
 
                     {hasChildren && (
-                      <div className="absolute left-full top-0 ml-1.5 hidden group-hover/category:flex flex-col bg-surface border border-outline-variant shadow-2xl rounded-2xl min-w-[220px] max-w-[280px] p-2 z-50 animate-in fade-in slide-in-from-left-2 duration-150 before:absolute before:-left-3 before:top-0 before:w-3 before:h-full before:content-['']">
-                        <div className="px-3 py-1.5 border-b border-outline-variant/50 mb-1">
-                          <span className="text-[11px] font-bold text-on-surface uppercase tracking-wider">
-                            {group.name}
-                          </span>
-                        </div>
+                      <div
+                        className={`${
+                          expandedCategory === group.id ? "flex" : "hidden"
+                        } static w-[calc(100%-1rem)] max-w-none mt-1 ml-2 flex-col bg-surface border border-outline-variant shadow-lg rounded-xl p-2 z-50 animate-in fade-in duration-150 lg:absolute lg:left-full lg:top-0 lg:ml-1.5 lg:mt-0 lg:hidden lg:min-w-[220px] lg:max-w-[280px] lg:rounded-2xl lg:shadow-2xl lg:group-hover/category:flex lg:animate-in lg:slide-in-from-left-2 lg:before:absolute lg:before:-left-3 lg:before:top-0 lg:before:w-3 lg:before:h-full lg:before:content-['']`}
+                      >
                         <div className="flex flex-col space-y-0.5">
                           {group.children.map((sub) => {
                             const isSubActive = selectedCategory === sub.id;
@@ -240,7 +247,7 @@ function HomeContent() {
             </nav>
           </div>
 
-          <div className="mt-4 p-6 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-2xl text-white shadow-xl shadow-blue-500/15 relative overflow-hidden group">
+          <div className="mt-4 p-6 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-2xl text-white shadow-xl shadow-blue-500/15 relative overflow-hidden group hidden-mobile">
             <span className="material-symbols-outlined text-4xl text-cyan-200 mb-3 animate-pulse select-none">
               bolt
             </span>

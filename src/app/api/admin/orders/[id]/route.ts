@@ -5,6 +5,13 @@ import { authOptions } from '@/lib/auth';
 
 const ORDER_STATUSES = ['PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED'] as const;
 type OrderStatus = (typeof ORDER_STATUSES)[number];
+const allowedTransitions: Record<OrderStatus, readonly OrderStatus[]> = {
+  PENDING: ['PROCESSING', 'CANCELLED'],
+  PROCESSING: ['SHIPPED', 'CANCELLED'],
+  SHIPPED: ['DELIVERED'],
+  DELIVERED: [],
+  CANCELLED: ['PENDING'],
+};
 
 async function requireAdmin() {
   const session = await getServerSession(authOptions);
@@ -76,6 +83,9 @@ export async function PATCH(
       if (!current) throw new Error('Order not found');
 
       if (dataToUpdate.status && dataToUpdate.status !== current.status) {
+        if (!allowedTransitions[current.status].includes(dataToUpdate.status)) {
+          throw new Error(`Không thể chuyển đơn từ ${current.status} sang ${dataToUpdate.status}`);
+        }
         if (dataToUpdate.status === 'CANCELLED') {
           for (const item of current.orderItems) {
             await tx.product.update({ where: { id: item.productId }, data: { stock: { increment: item.quantity } } });
@@ -97,7 +107,8 @@ export async function PATCH(
     return NextResponse.json(order);
   } catch (error) {
     console.error('Error updating order:', error);
-    return NextResponse.json({ error: 'Failed to update order' }, { status: 500 });
+    const message = error instanceof Error ? error.message : 'Failed to update order';
+    return NextResponse.json({ error: message }, { status: message.startsWith('Không thể') ? 400 : 500 });
   }
 }
 
