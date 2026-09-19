@@ -320,6 +320,18 @@ function HeaderContent() {
                             </span>
                             Đơn hàng
                           </Link>
+                          {session.user?.role === "ADMIN" && (
+                            <Link
+                              href="/admin"
+                              onClick={() => setUserMenuOpen(false)}
+                              className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-primary hover:bg-primary/10 rounded-lg transition-colors"
+                            >
+                              <span className="material-symbols-outlined text-lg">
+                                admin_panel_settings
+                              </span>
+                              Trang Quản Trị
+                            </Link>
+                          )}
                           <button
                             onClick={() => {
                               signOut();

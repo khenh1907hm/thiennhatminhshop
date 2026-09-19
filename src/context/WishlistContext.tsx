@@ -56,11 +56,18 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ items: itemIds })
         })
-          .then(() => {
+          .then(async (res) => {
+            if (!res.ok) {
+              const data = await res.json().catch(() => ({}));
+              throw new Error(data.error || "Failed to merge wishlist");
+            }
             clearGuestWishlist();
             return fetch('/api/wishlist');
           })
-          .then((res) => res.json())
+          .then(async (res) => {
+            if (!res.ok) throw new Error("Failed to load merged wishlist");
+            return res.json();
+          })
           .then((data) => {
             if (Array.isArray(data)) setWishlist(data.map((item) => item.product));
           })

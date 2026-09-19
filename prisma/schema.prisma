@@ -117,6 +117,7 @@ model Product {
 model Order {
   id              String      @id @default(uuid())
   orderNumber     String      @unique // e.g. ORD-123456
+  clientRequestId String?     @unique
   userId          String?
   user            User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
   totalAmount     Decimal     @db.Decimal(10, 2)

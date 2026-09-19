@@ -30,7 +30,16 @@ export async function PUT(request: Request) {
     });
 
     if (existingItem) {
+      const product = await prisma.product.findUnique({
+        where: { id: productId },
+        select: { stock: true }
+      });
+      if (!product) return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+
       const newQuantity = Math.max(1, existingItem.quantity + delta);
+      if (newQuantity > product.stock) {
+        return NextResponse.json({ error: 'Số lượng sản phẩm vượt quá tồn kho' }, { status: 409 });
+      }
       await prisma.cartItem.update({
         where: { id: existingItem.id },
         data: { quantity: newQuantity }

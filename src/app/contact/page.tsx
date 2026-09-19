@@ -70,10 +70,17 @@ export default function ContactPage() {
               </div>
             </div>
 
-            <div className="hidden-mobile bg-gradient-to-br from-slate-800 to-slate-700 rounded-2xl p-6 text-white space-y-2 shadow-md">
-              <h3 className="font-bold text-sm font-headline">Thời gian làm việc</h3>
-              <p className="text-xs text-slate-200">Thứ Hai - Thứ Bảy: 08:00 - 17:30</p>
-              <p className="text-xs text-slate-200">Chủ Nhật: Hỗ trợ tư vấn khẩn cấp qua Hotline</p>
+            <div className="min-h-[116px] rounded-2xl p-6 text-white shadow-lg shadow-slate-950/20 relative overflow-hidden flex items-center hidden-mobile">
+              <div
+                aria-hidden="true"
+                className="absolute inset-0 bg-[url('/images/bg-card1.png')] bg-cover bg-center"
+              />
+              <div aria-hidden="true" className="absolute inset-0 bg-slate-950/85" />
+              <div className="relative min-w-0">
+                <h3 className="font-bold text-sm font-headline leading-5">Thời gian làm việc</h3>
+                <p className="text-xs text-slate-200 leading-5">Thứ Hai - Thứ Bảy: 08:00 - 17:30</p>
+                <p className="text-xs text-slate-200 leading-5">Chủ Nhật: Hỗ trợ tư vấn khẩn cấp qua Hotline</p>
+              </div>
             </div>
           </div>
 

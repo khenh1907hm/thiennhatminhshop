@@ -247,7 +247,13 @@ function HomeContent() {
             </nav>
           </div>
 
-          <div className="mt-4 p-6 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-2xl text-white shadow-xl shadow-blue-500/15 relative overflow-hidden group hidden-mobile">
+          <div className="mt-4 p-6 rounded-2xl text-white shadow-xl shadow-slate-950/25 relative overflow-hidden group hidden-mobile">
+            <div
+              aria-hidden="true"
+              className="absolute inset-0 bg-[url('/images/bg-card1.png')] bg-cover bg-center transition-transform duration-500 group-hover:scale-105"
+            />
+            <div aria-hidden="true" className="absolute inset-0 bg-slate-950/80" />
+            <div className="relative">
             <span className="material-symbols-outlined text-4xl text-cyan-200 mb-3 animate-pulse select-none">
               bolt
             </span>
@@ -263,6 +269,7 @@ function HomeContent() {
             >
               LIÊN HỆ NGAY
             </button>
+            </div>
           </div>
         </aside>
 

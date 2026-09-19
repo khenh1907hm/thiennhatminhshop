@@ -17,12 +17,23 @@ export default function ProductCard({ product }: ProductCardProps) {
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
 
   const isLiked = isInWishlist(product.id);
+  const isOutOfStock = typeof product.stock === "number"
+    ? product.stock <= 0
+    : product.inStock === false;
 
-  const handleAddToCart = (e: React.MouseEvent) => {
+  const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    addToCart(product, 1);
-    showNotification(`Đã thêm 1 x ${product.name} vào giỏ hàng thành công!`, "success");
+    if (isOutOfStock) {
+      showNotification(`Sản phẩm ${product.name} đã hết hàng.`, "error");
+      return;
+    }
+    const addedQuantity = await addToCart(product, 1);
+    const added = addedQuantity > 0;
+    showNotification(
+      added ? `Đã thêm 1 x ${product.name} vào giỏ hàng thành công!` : `Sản phẩm ${product.name} đã đạt giới hạn tồn kho.`,
+      added ? "success" : "error"
+    );
   };
 
   const handleToggleWishlist = (e: React.MouseEvent) => {
@@ -54,7 +65,12 @@ export default function ProductCard({ product }: ProductCardProps) {
             loading="lazy"
             decoding="async"
           />
-          {product.inStock && (
+          {isOutOfStock ? (
+            <div className="absolute top-2 left-2 sm:top-3 sm:left-3 bg-slate-500 text-white px-2 py-1 rounded-md text-[9px] sm:text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 shadow-sm">
+              <span className="w-1.5 h-1.5 bg-white rounded-full"></span>
+              Hết hàng
+            </div>
+          ) : (
             <div className="absolute top-2 left-2 sm:top-3 sm:left-3 bg-emerald-500 text-white px-2 py-1 rounded-md text-[9px] sm:text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 shadow-sm">
               <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></span>
               Sẵn Hàng
@@ -102,10 +118,11 @@ export default function ProductCard({ product }: ProductCardProps) {
         
         <button
           onClick={handleAddToCart}
-          className="px-2.5 sm:px-3.5 py-2 sm:py-2.5 bg-primary hover:bg-primary/90 text-on-primary text-[10px] sm:text-xs font-semibold rounded-xl flex items-center gap-1 transition-all shadow-md shadow-primary/20 active:scale-95 cursor-pointer shrink-0"
+          disabled={isOutOfStock}
+          className="px-2.5 sm:px-3.5 py-2 sm:py-2.5 bg-primary hover:bg-primary/90 text-on-primary text-[10px] sm:text-xs font-semibold rounded-xl flex items-center gap-1 transition-all shadow-md shadow-primary/20 active:scale-95 cursor-pointer shrink-0 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500 disabled:shadow-none disabled:hover:bg-slate-300"
         >
           <span className="material-symbols-outlined text-[15px] sm:text-[16px]">shopping_cart</span>
-          <span>Mua ngay</span>
+          <span>{isOutOfStock ? "Hết hàng" : "Mua ngay"}</span>
         </button>
       </div>
     </Link>

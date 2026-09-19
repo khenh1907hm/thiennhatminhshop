@@ -7,6 +7,7 @@ export interface Product {
   price: string;
   numericPrice: number;
   inStock: boolean;
+  stock?: number;
   description: string;
   category: string;
   originalPrice?: string;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import Link from "next/link";
@@ -56,12 +56,62 @@ export default function Cart() {
         email: session?.user?.email || prev.email,
       }));
       // Thêm phần fetch API profile để lấy address/phone nếu cần
-      fetch('/api/user/profile').then(res => res.json()).then(data => {
+      fetch('/api/user/profile').then(res => res.json()).then(async data => {
         if (data.phone || data.address) {
+          const addressParts = typeof data.address === "string"
+            ? data.address.split(",").map((part: string) => part.trim()).filter(Boolean)
+            : [];
+          const saved = addressParts.length >= 4
+            ? {
+                detail: addressParts[0],
+                ward: addressParts[1],
+                district: addressParts[2],
+                province: addressParts[3],
+              }
+            : null;
+          if (saved) {
+            try {
+              const provinceResponse = await fetch("https://provinces.open-api.vn/api/?depth=1");
+              const provinceOptions = parseAddressOptions(await provinceResponse.json());
+              const province = provinceOptions.find((option) => option.name === saved.province);
+              if (province) {
+                const districtResponse = await fetch(`https://provinces.open-api.vn/api/p/${province.code}?depth=2`);
+                const districtOptions = parseAddressOption(await districtResponse.json()).districts || [];
+                const district = districtOptions.find((option) => option.name === saved.district);
+                if (district) {
+                  const wardResponse = await fetch(`https://provinces.open-api.vn/api/d/${district.code}?depth=2`);
+                  const wardOptions = parseAddressOption(await wardResponse.json()).wards || [];
+                  const ward = wardOptions.find((option) => option.name === saved.ward);
+                  setProvinces(provinceOptions);
+                  setDistricts(districtOptions);
+                  setWards(wardOptions);
+                  setCustomerInfo((current) => ({
+                    ...current,
+                    province: saved.province,
+                    provinceCode: String(province.code),
+                    district: saved.district,
+                    districtCode: String(district.code),
+                    ward: saved.ward,
+                    wardCode: ward ? String(ward.code) : "",
+                    addressDetail: saved.detail,
+                  }));
+                }
+              }
+            } catch {
+              // Keep the address detail if the location service is unavailable.
+            }
+          }
           setCustomerInfo(prev => ({
             ...prev,
             phone: data.phone || prev.phone,
-            addressDetail: data.address?.split(",")[0]?.trim() || prev.addressDetail,
+            ...(saved
+              ? {
+                  province: saved.province,
+                  district: saved.district,
+                  ward: saved.ward,
+                  addressDetail: saved.detail,
+                }
+              : { addressDetail: data.address?.split(",")[0]?.trim() || prev.addressDetail }),
           }));
         }
       }).catch(e => {});
@@ -93,6 +143,7 @@ export default function Cart() {
 
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [orderSuccessId, setOrderSuccessId] = useState<string | null>(null);
+  const orderRequestIdRef = useRef<string | null>(null);
 
   // Calculations
   const subtotal = items.reduce((acc, item) => acc + (item.product.numericPrice || Number(item.product.price) || 0) * item.quantity, 0);
@@ -142,6 +193,8 @@ export default function Cart() {
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (isProcessingPayment || orderRequestIdRef.current) return;
+
     if (isGuest && !checkoutSettings.allowGuestCheckout) {
       showNotification("Cửa hàng yêu cầu đăng nhập trước khi đặt hàng.", "error");
       return;
@@ -151,6 +204,8 @@ export default function Cart() {
       return;
     }
 
+    const clientRequestId = crypto.randomUUID();
+    orderRequestIdRef.current = clientRequestId;
     setIsProcessingPayment(true);
     try {
       const res = await fetch('/api/orders', {
@@ -163,6 +218,7 @@ export default function Cart() {
           shippingAddress: `${customerInfo.addressDetail}, ${customerInfo.ward}, ${customerInfo.district}, ${customerInfo.province}`,
           note: customerInfo.note,
           paymentMethod: customerInfo.paymentMethod,
+          clientRequestId,
           items: items.map(item => ({
             productId: item.product.id,
             quantity: item.quantity,
@@ -182,6 +238,7 @@ export default function Cart() {
     } catch (error: any) {
       console.error(error);
       showNotification(error.message, "error");
+      orderRequestIdRef.current = null;
     } finally {
       setIsProcessingPayment(false);
     }

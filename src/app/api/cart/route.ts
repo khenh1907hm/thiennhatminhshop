@@ -79,13 +79,16 @@ export async function POST(request: Request) {
         }
         const productExists = await prisma.product.findUnique({
           where: { id: item.productId },
-          select: { id: true }
+          select: { id: true, stock: true }
         });
         if (!productExists) continue;
 
         const existingItem = await prisma.cartItem.findUnique({
           where: { cartId_productId: { cartId: cart.id, productId: item.productId } }
         });
+        if ((existingItem?.quantity || 0) + item.quantity > productExists.stock) {
+          return NextResponse.json({ error: 'Số lượng sản phẩm vượt quá tồn kho' }, { status: 409 });
+        }
         if (existingItem) {
           await prisma.cartItem.update({
             where: { id: existingItem.id },
@@ -104,7 +107,7 @@ export async function POST(request: Request) {
     if (typeof productId === 'string' && productId && Number.isInteger(quantity) && quantity > 0 && quantity <= 1000) {
       const productExists = await prisma.product.findUnique({
         where: { id: productId },
-        select: { id: true }
+        select: { id: true, stock: true }
       });
       if (!productExists) {
         return NextResponse.json({ error: 'Product not found' }, { status: 404 });
@@ -113,6 +116,9 @@ export async function POST(request: Request) {
       const existingItem = await prisma.cartItem.findUnique({
         where: { cartId_productId: { cartId: cart.id, productId: productId } }
       });
+      if ((existingItem?.quantity || 0) + quantity > productExists.stock) {
+        return NextResponse.json({ error: 'Số lượng sản phẩm vượt quá tồn kho' }, { status: 409 });
+      }
       if (existingItem) {
         await prisma.cartItem.update({
           where: { id: existingItem.id },

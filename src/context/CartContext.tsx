@@ -11,7 +11,7 @@ export interface CartItem {
 
 interface CartContextType {
   items: CartItem[];
-  addToCart: (product: Product, quantity: number) => void;
+  addToCart: (product: Product, quantity: number) => Promise<number>;
   updateQuantity: (productId: string, delta: number) => void;
   removeFromCart: (productId: string) => void;
   clearCart: () => void;
@@ -66,11 +66,18 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ items: itemsToMerge })
         })
-          .then(() => {
+          .then(async (res) => {
+            if (!res.ok) {
+              const data = await res.json().catch(() => ({}));
+              throw new Error(data.error || "Failed to merge cart");
+            }
             clearGuestCart();
             return fetch('/api/cart');
           })
-          .then((res) => res.json())
+          .then(async (res) => {
+            if (!res.ok) throw new Error("Failed to load merged cart");
+            return res.json();
+          })
           .then((data) => {
             if (data.items && Array.isArray(data.items)) setItems(data.items);
           })
@@ -97,15 +104,23 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     const safeQuantity = Number.isInteger(quantity) ? Math.max(1, quantity) : 1;
     const prevItems = [...items];
     const existingIndex = items.findIndex((item) => item.product.id === product.id);
+    const existingQuantity = existingIndex > -1 ? items[existingIndex].quantity : 0;
+    const stock = Number((product as Product & { stock?: number }).stock);
+    const quantityToAdd = Number.isFinite(stock)
+      ? Math.min(safeQuantity, Math.max(0, stock - existingQuantity))
+      : safeQuantity;
+
+    if (quantityToAdd <= 0) return 0;
+
     const updated = [...items];
 
     if (existingIndex > -1) {
       updated[existingIndex] = {
         ...updated[existingIndex],
-        quantity: updated[existingIndex].quantity + safeQuantity
+        quantity: updated[existingIndex].quantity + quantityToAdd
       };
     } else {
-      updated.push({ product, quantity: safeQuantity });
+      updated.push({ product, quantity: quantityToAdd });
     }
 
     setItems(updated);
@@ -115,23 +130,30 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         const res = await fetch('/api/cart', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ productId: product.id, quantity: safeQuantity })
+          body: JSON.stringify({ productId: product.id, quantity: quantityToAdd })
         });
         if (!res.ok) throw new Error("API Failed");
       } catch (error) {
         console.error("Failed to add to cart API", error);
         setItems(prevItems);
+        return 0;
       }
     } else {
       localStorage.setItem(GUEST_CART_KEY, JSON.stringify(updated));
     }
+    return quantityToAdd;
   };
 
   const updateQuantity = async (productId: string, delta: number) => {
     const prevItems = [...items];
     const updated = items.map((item) => {
       if (item.product.id === productId) {
-        return { ...item, quantity: Math.max(1, item.quantity + delta) };
+        const stock = Number((item.product as Product & { stock?: number }).stock);
+        const requestedQuantity = Math.max(1, item.quantity + delta);
+        const quantity = Number.isFinite(stock)
+          ? Math.min(stock, requestedQuantity)
+          : requestedQuantity;
+        return { ...item, quantity };
       }
       return item;
     });

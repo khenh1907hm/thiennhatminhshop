@@ -3,8 +3,14 @@ import Link from "next/link";
 
 export default function Footer() {
   return (
-    <footer className="bg-gradient-to-br from-[#123b67] via-[#15558a] to-[#087f9b] text-white w-full py-12 px-8 mt-auto border-t border-cyan-200/20">
-      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-[1.6fr_1fr_1fr] gap-x-16 gap-y-10 items-start">
+    <footer className="relative isolate overflow-hidden text-white w-full py-12 px-8 mt-auto border-t border-cyan-200/20">
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 -z-20 bg-[url('/images/bg-1.jpg')] bg-cover bg-center"
+      />
+      <div aria-hidden="true" className="absolute inset-0 -z-10 bg-slate-950/65" />
+
+      <div className="relative max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-[1.6fr_1fr_1fr] gap-x-16 gap-y-10 items-start">
         <div className="flex flex-col gap-4">
           <h4 className="text-white font-bold uppercase tracking-widest text-sm font-headline">
             THÔNG TIN LIÊN HỆ

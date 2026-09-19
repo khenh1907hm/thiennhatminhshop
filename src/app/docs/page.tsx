@@ -184,7 +184,13 @@ export default function DocsPage() {
             </div>
 
             {/* Info Banner */}
-            <div className="p-5 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-2xl text-white shadow-xl shadow-blue-500/15 relative overflow-hidden hidden-mobile">
+            <div className="p-5 rounded-2xl text-white shadow-xl shadow-slate-950/25 relative overflow-hidden hidden-mobile">
+              <div
+                aria-hidden="true"
+                className="absolute inset-0 bg-[url('/images/bg-card.jpeg')] bg-cover bg-center"
+              />
+              <div aria-hidden="true" className="absolute inset-0 bg-slate-950/80" />
+              <div className="relative">
               <span className="material-symbols-outlined text-3xl text-cyan-200 mb-2 animate-pulse select-none">
                 cloud_download
               </span>
@@ -201,6 +207,7 @@ export default function DocsPage() {
               >
                 LIÊN HỆ NGAY
               </a>
+              </div>
             </div>
           </aside>
 

@@ -96,9 +96,13 @@ export default function ProductDetail() {
   const specGroups = parseSpecs(product.specs);
 
   // Handler to add to cart
-  const handleAddToCart = () => {
-    addToCart(product, quantity);
-    showNotification(`Đã thêm ${quantity} x ${product.name} vào giỏ hàng thành công!`, "success");
+  const handleAddToCart = async () => {
+    const addedQuantity = await addToCart(product, quantity);
+    if (addedQuantity > 0) {
+      showNotification(`Đã thêm ${addedQuantity} x ${product.name} vào giỏ hàng thành công!`, "success");
+    } else {
+      showNotification(`Sản phẩm ${product.name} đã đạt giới hạn tồn kho.`, "error");
+    }
   };
 
   const isFavorite = product ? isInWishlist(product.id) : false;

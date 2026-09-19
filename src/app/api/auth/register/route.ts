@@ -6,6 +6,8 @@ import { NextResponse } from "next/server";
 import { checkRateLimit, getClientKey, rateLimitResponse } from "@/lib/rateLimit";
 import { isValidEmail } from "@/lib/validation";
 
+const DUPLICATE_EMAIL_MESSAGE = "Email này đã được sử dụng";
+
 export async function POST(request: Request) {
   try {
     const rate = checkRateLimit(getClientKey(request, "register"), 5, 15 * 60 * 1000);
@@ -26,7 +28,7 @@ export async function POST(request: Request) {
 
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing?.emailVerified) {
-      return new NextResponse("Email này đã được sử dụng", { status: 400 });
+      return NextResponse.json({ error: DUPLICATE_EMAIL_MESSAGE }, { status: 400 });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -50,6 +52,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true, message: "Đăng ký thành công. Vui lòng kiểm tra email để xác minh tài khoản." }, { status: 201 });
   } catch (error) {
     console.error("Lỗi đăng ký:", error);
+    if (typeof error === "object" && error !== null && "code" in error && error.code === "P2002") {
+      return NextResponse.json({ error: DUPLICATE_EMAIL_MESSAGE }, { status: 400 });
+    }
     const message = error instanceof Error ? error.message : "Lỗi máy chủ nội bộ";
     return NextResponse.json({ error: message }, { status: 500 });
   }

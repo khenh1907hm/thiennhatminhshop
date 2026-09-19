@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Header from "@/components/layout/Header";
@@ -11,6 +11,8 @@ export default function RegisterPage() {
   const router = useRouter();
   const { showNotification } = useNotification();
   const [loading, setLoading] = useState(false);
+  const [rateLimitUntil, setRateLimitUntil] = useState<number | null>(null);
+  const [remainingSeconds, setRemainingSeconds] = useState(0);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -18,8 +20,31 @@ export default function RegisterPage() {
     confirmPassword: "",
   });
 
+  useEffect(() => {
+    if (!rateLimitUntil) {
+      setRemainingSeconds(0);
+      return;
+    }
+
+    const updateCountdown = () => {
+      const nextValue = Math.max(0, Math.ceil((rateLimitUntil - Date.now()) / 1000));
+      setRemainingSeconds(nextValue);
+
+      if (nextValue <= 0) {
+        setRateLimitUntil(null);
+      }
+    };
+
+    updateCountdown();
+    const timer = window.setInterval(updateCountdown, 1000);
+    return () => window.clearInterval(timer);
+  }, [rateLimitUntil]);
+
+  const isRateLimited = remainingSeconds > 0;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isRateLimited) return;
     if (formData.password !== formData.confirmPassword) {
       showNotification("Mật khẩu xác nhận không khớp!", "error");
       return;
@@ -39,6 +64,18 @@ export default function RegisterPage() {
 
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
+
+        if (res.status === 429) {
+          const waitSeconds = Number(body.retryAfterSeconds ?? res.headers.get("Retry-After") ?? 0);
+          const safeWaitSeconds = Number.isFinite(waitSeconds) && waitSeconds > 0 ? waitSeconds : 900;
+          setRateLimitUntil(Date.now() + safeWaitSeconds * 1000);
+          showNotification(
+            `Bạn đã thử quá nhiều lần. Vui lòng chờ ${safeWaitSeconds} giây trước khi đăng ký lại.`,
+            "error",
+          );
+          return;
+        }
+
         showNotification(body.error || "Đăng ký thất bại", "error");
       } else {
         showNotification("Đăng ký thành công! Đang chuyển hướng...", "success");
@@ -110,12 +147,18 @@ export default function RegisterPage() {
               />
             </div>
 
+            {isRateLimited && (
+              <p className="text-sm text-red-600 font-medium">
+                Bạn đang bị giới hạn đăng ký. Vui lòng chờ thêm {remainingSeconds} giây trước khi thử lại.
+              </p>
+            )}
+
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || isRateLimited}
               className="w-full py-3 mt-4 bg-primary text-on-primary rounded-xl font-bold hover:bg-primary/90 transition-all disabled:opacity-50"
             >
-              {loading ? "Đang xử lý..." : "Đăng ký"}
+              {loading ? "Đang xử lý..." : isRateLimited ? `Thử lại sau ${remainingSeconds}s` : "Đăng ký"}
             </button>
           </form>
 

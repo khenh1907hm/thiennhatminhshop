@@ -7,6 +7,7 @@ import { isValidEmail, isValidVietnamesePhone } from '@/lib/validation';
 import { escapeHtml, sendEmail } from '@/lib/email';
 
 export async function POST(request: Request) {
+  let requestClientId: string | null = null;
   try {
     const rate = checkRateLimit(getClientKey(request, 'order'), 10, 10 * 60 * 1000);
     if (!rate.allowed) return rateLimitResponse(rate.retryAfterSeconds);
@@ -27,8 +28,14 @@ export async function POST(request: Request) {
       shippingAddress, 
       note, 
       paymentMethod,
+      clientRequestId,
       items,
     } = body;
+    requestClientId = typeof clientRequestId === 'string' ? clientRequestId : null;
+
+    if (clientRequestId !== undefined && (typeof clientRequestId !== 'string' || clientRequestId.length > 100)) {
+      return NextResponse.json({ error: 'Mã yêu cầu không hợp lệ' }, { status: 400 });
+    }
 
     if (!Array.isArray(items) || items.length === 0) {
       return NextResponse.json({ error: 'Order must contain items' }, { status: 400 });
@@ -54,6 +61,16 @@ export async function POST(request: Request) {
 
     if (paymentMethod !== 'cod') {
       return NextResponse.json({ error: 'Thanh toán QR chưa được tích hợp. Vui lòng chọn thanh toán khi nhận hàng.' }, { status: 400 });
+    }
+
+    if (clientRequestId) {
+      const existingOrder = await prisma.order.findUnique({
+        where: { clientRequestId },
+        include: { orderItems: true }
+      });
+      if (existingOrder) {
+        return NextResponse.json({ success: true, duplicate: true, order: existingOrder }, { status: 200 });
+      }
     }
 
     // Generate random order number ORD-XXXXXX
@@ -88,6 +105,7 @@ export async function POST(request: Request) {
       return await tx.order.create({
         data: {
           orderNumber,
+          clientRequestId: clientRequestId || null,
           userId,
           customerName,
           customerPhone,
@@ -125,6 +143,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true, order }, { status: 201 });
   } catch (error: unknown) {
     console.error('Error creating order:', error);
+    if (requestClientId) {
+      const existingOrder = await prisma.order.findUnique({
+        where: { clientRequestId: requestClientId },
+        include: { orderItems: true }
+      });
+      if (existingOrder) {
+        return NextResponse.json({ success: true, duplicate: true, order: existingOrder }, { status: 200 });
+      }
+    }
     const message = error instanceof Error ? error.message : 'Failed to create order';
     return NextResponse.json({ error: message }, { status: 400 });
   }

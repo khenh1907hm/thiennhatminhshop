@@ -35,8 +35,14 @@ export function checkRateLimit(key: string, limit: number, windowMs: number) {
 }
 
 export function rateLimitResponse(retryAfterSeconds: number) {
-  return new Response(JSON.stringify({ error: "Bạn thao tác quá nhanh. Vui lòng thử lại sau." }), {
-    status: 429,
-    headers: { "Content-Type": "application/json", "Retry-After": String(retryAfterSeconds) },
-  });
+  return new Response(
+    JSON.stringify({
+      error: "Bạn thao tác quá nhanh. Vui lòng thử lại sau.",
+      retryAfterSeconds,
+    }),
+    {
+      status: 429,
+      headers: { "Content-Type": "application/json", "Retry-After": String(retryAfterSeconds) },
+    },
+  );
 }
